@@ -1,5 +1,6 @@
 import React from "react";
 import { ThemeProvider, useTheme } from "./theme-context";
+import { DrawingProvider } from "./contexts/DrawingContext";
 import { Navbar } from "./components/Navbar";
 import Button from "./components/Button";
 import { ButtonBorder } from "./components/ButtonBorder";
@@ -45,7 +46,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <AppContent />
+      <DrawingProvider>
+        <AppContent />
+      </DrawingProvider>
     </ThemeProvider>
   );
 };

@@ -17,9 +17,14 @@ export interface DrawingCommand {
     height?: number;
     radius?: number;
     color: string;
-    size: number;
-    text?: string;
-    font?: string;
+    size: number;    text?: string;
+    textStyle?: {
+        fontFamily: string;
+        fontSize: number;
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+    };
     image?: HTMLImageElement;
     isSelected?: boolean;
     selectionArea?: {

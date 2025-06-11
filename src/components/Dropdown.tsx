@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 
 interface DropdownProps {
     children: (props: { isOpen: boolean }) => React.ReactNode;
-    dropdown: React.ReactNode; // dropdown content
+    dropdown: ((props: { onClose: () => void }) => React.ReactNode) | React.ReactNode; // dropdown content
     placement?: 'top' | 'bottom' | 'left' | 'right';
     isChild?: boolean;
+    classNames?: string;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bottom', isChild }) => {
+const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bottom', isChild, classNames }) => {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -26,30 +27,30 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
         }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-            setOpen(false);
-        }
-    };
-
-    useEffect(() => {
-        if (open) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [open]);
-
-    return (<div className="w-full relative" ref={dropdownRef}>
-        <div className='w-full' onClick={() => setOpen(!open)}>
-            {children({ isOpen: open })}
-        </div>
-        <div className={`absolute z-50 rounded shadow-custom-11 bg-white shadow transition-all duration-200 ease-in-out transform
-    ${open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'}
-    ${getPlacementClasses(placement)}`}
-        >
-            <div className="w-max min-w-[150px] max-w-[400px] h-full">
-                {dropdown}
+    return (
+        <>
+            {/* Overlay layer */}
+            {open && (
+                <div 
+                    className="fixed inset-0 z-40 bg-transparent" 
+                    onClick={() => setOpen(false)}
+                />
+            )}
+            <div className="relative" ref={dropdownRef}>
+                <div onClick={() => setOpen(!open)}>
+                    {children({ isOpen: open })}
+                </div>
+                <div 
+                    className={`absolute z-50 rounded shadow-custom-11 bg-white transition-all duration-200 ease-in-out transform
+                        ${open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'}
+                        ${getPlacementClasses(placement)}`}
+                >
+                    <div className={`w-max min-w-[150px] h-full ${classNames}`}>
+                        {typeof dropdown === 'function' ? dropdown({ onClose: () => setOpen(false) }) : dropdown}
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        </>
     );
 };
 

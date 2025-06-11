@@ -22,6 +22,7 @@ interface IconSet {
     FiPlus: React.ComponentType<any>;
     RiCheckboxMultipleBlankLine: React.ComponentType<any>;
     IoMenu: React.ComponentType<any>;
+    BsCheck: React.ComponentType<any>;
 }
 
 
@@ -58,7 +59,7 @@ const themes: ThemeMap = {
             buttonBorder:
                 "bg-transparent text-blue-500 border border-blue-500 hover:bg-blue-100",
             buttonIcon:
-                "!bg-transparent !text-blue-500 hover:!bg-blue-100 active:!bg-blue-200",
+                "bg-transparent !text-blue-500 hover:!bg-blue-100 active:!bg-blue-200",
         },
     },
     light: {
@@ -82,7 +83,7 @@ const themes: ThemeMap = {
         },
     },
     children: {
-        global: "bg-yellow-100 text-yellow-900 text-lg font-cherry",
+        global: "bg-yellow-100 text-yellow-900 text-lg font-vtv323",
         iconSet: childrenIcons as IconSet,
         components: {
             navbar: "bg-yellow-200 text-yellow-800 hover:bg-yellow-300",
@@ -90,7 +91,7 @@ const themes: ThemeMap = {
             buttonBorder:
                 "bg-transparent text-pink-600 border border-pink-600 hover:bg-pink-100",
             buttonIcon:
-                "!bg-transparent !text-pink-500  hover:!bg-pink-100 active:!bg-pink-200",
+                "bg-transparent !text-pink-500  hover:!bg-pink-100 active:!bg-pink-200",
         },
     },
 };

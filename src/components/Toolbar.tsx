@@ -1,51 +1,31 @@
 import React from 'react';
-import { Page } from './types/drawing';
+import { useDrawing } from '../contexts/DrawingContext';
 
-interface ToolbarProps {
-    setCurrentTool: (tool: string) => void;
-    setCurrentBrushType: (brushType: string) => void;
-    setCurrentColor: (color: string) => void;
-    setCurrentBrushSize: (size: number) => void;
-    undo: () => void;
-    redo: () => void;
-    clear: () => void;
-    saveAsPNG: () => void;
-    saveAsPDF: () => void;
-    importImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    pages: Page[];
-    setPages: React.Dispatch<React.SetStateAction<Page[]>>;
-    currentPageId: number;
-    setCurrentPageId: (id: number) => void;
-    zoomLevel: number;
-    zoomIn: () => void;
-    zoomOut: () => void;
-    resetZoom: () => void;
-}
+const Toolbar = () => {    const {
+        setCurrentTool,
+        setCurrentBrushType,
+        setCurrentColor,
+        setCurrentBrushSize,
+        undo,
+        redo,
+        clear,
+        saveAsPNG,
+        saveAsPDF,
+        importImage,
+        pages,
+        setPages,
+        currentPageId,
+        setCurrentPageId,
+        zoomLevel,
+        zoomIn,
+        zoomOut,
+        resetZoom,
+    } = useDrawing();
 
-const Toolbar: React.FC<ToolbarProps> = ({
-    setCurrentTool,
-    setCurrentBrushType,
-    setCurrentColor,
-    setCurrentBrushSize,
-    undo,
-    redo,
-    clear,
-    saveAsPNG,
-    saveAsPDF,
-    importImage,
-    pages,
-    setPages,
-    currentPageId,
-    setCurrentPageId,
-    zoomLevel,
-    zoomIn,
-    zoomOut,
-    resetZoom,
-}) => {
     const addPage = () => {
-        const newPage: Page = { id: pages.length + 1, commands: [] };
-        setPages((prev) => [...prev, newPage]);
-        setCurrentPageId(newPage.id);
+        const maxId = Math.max(...pages.map(page => page.id));
+        setPages([...pages, { id: maxId + 1, commands: [] }]);
+        setCurrentPageId(maxId + 1);
     };
 
     return (
@@ -109,9 +89,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <input
                 type="range"
                 min="1"
-                max="50"
-                className="w-32"
-                onChange={(e) => setCurrentBrushSize(Number(e.target.value))}
+                max="20"
+                onChange={(e) => setCurrentBrushSize(parseInt(e.target.value))}
             />
             <button
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"

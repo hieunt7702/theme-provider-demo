@@ -16,7 +16,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({
         handleTextSubmit,
         showTextInput
     } = useDrawing();
-
+    const zoomFactor = zoomLevel / 100;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const adjustTextareaHeight = () => {
@@ -55,9 +55,9 @@ export const TextEditor: React.FC<TextEditorProps> = ({
     return (
         <div className="absolute"
             style={{
-                top: position.y  - 5,
-                left: position.x ,
-                transform: `scale(${zoomLevel / 100})`,
+                top: position.y * zoomFactor,
+                left: position.x * zoomFactor,
+                transform: `scale(${zoomFactor})`,
                 transformOrigin: 'top left',
                 pointerEvents: 'auto',
                 width: 'auto',

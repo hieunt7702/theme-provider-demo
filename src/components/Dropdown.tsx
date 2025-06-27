@@ -12,6 +12,23 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Add effect to handle parent click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [open]);
+
     const getPlacementClasses = (placement: string): string => {
         switch (placement) {
             case 'top':
@@ -28,16 +45,21 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
     };
 
     return (
-        <>
-            {/* Overlay layer */}
-            {open && (
+        <>            {/* Only add overlay when it's not a child dropdown */}
+            {!isChild && open && (
                 <div 
                     className="fixed inset-0 z-40 bg-transparent" 
                     onClick={() => setOpen(false)}
                 />
             )}
             <div className="relative" ref={dropdownRef}>
-                <div onClick={() => setOpen(!open)}>
+                {/* For child dropdowns, stop event propagation to prevent parent from closing */}
+                <div onClick={(e) => {
+                    if (isChild) {
+                        e.stopPropagation();
+                    }
+                    setOpen(!open);
+                }}>
                     {children({ isOpen: open })}
                 </div>
                 <div 

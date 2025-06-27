@@ -1,6 +1,7 @@
-import { useTheme } from "../theme-context";
+import exp from "constants";
+import { useTheme } from "../contexts/theme-context";
 
-export const ButtonBorder = () => {
+const ButtonBorder = () => {
     const { config } = useTheme();
     const style = config.components.buttonBorder;
 
@@ -12,3 +13,5 @@ export const ButtonBorder = () => {
         </button>
     );
 };
+
+export default ButtonBorder;

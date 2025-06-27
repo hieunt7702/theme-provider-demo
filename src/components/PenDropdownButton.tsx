@@ -1,10 +1,11 @@
 import { BsCheck } from "react-icons/bs";
-import { useTheme } from "../theme-context";
-import { ButtonIcon } from "./ButtonIcon"
+import { useTheme } from "../contexts/theme-context";
 import Dropdown from "./Dropdown"
 import { InputRange } from "./InputRange";
+import { BRUSH_TYPE, useDrawing } from "../contexts/DrawingContext";
+import ButtonIcon from "./ButtonIcon";
 
-interface PenDropdownButtonProps {
+export interface PenDropdownButtonProps {
     isActive?: boolean;
     onColorChange?: (color: string) => void;
     onBrushSizeChange: (size: number) => void;
@@ -17,7 +18,21 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
     const dataColorsDefault = [
         "#000000", "#f0a3a3", "#f0c3a3", "#f0e3a3", "#a3f0a3", "#a3f0e3"
     ]
+    const { PencilOutlineIcon,
+        MemoryPenOutlineIcon,
+        ColorPenOutlineIcon,
+        PaintPenOutlineIcon,
+        PenOutlineIcon, } = iconSet;
 
+    const dataPenTypes = [
+        { type: BRUSH_TYPE.PENCIL, name: "Bút chì", icon: PencilOutlineIcon },
+        { type: BRUSH_TYPE.MEMORY_PEN, name: "Bút nhớ", icon: MemoryPenOutlineIcon },
+        { type: BRUSH_TYPE.COLOR_PEN, name: "Bút màu", icon: ColorPenOutlineIcon },
+        { type: BRUSH_TYPE.PAINT_PEN, name: "Bút sơn", icon: PaintPenOutlineIcon },
+        { type: BRUSH_TYPE.PEN, name: "Bút bi", icon: PenOutlineIcon }
+    ]
+
+    const { currentBrushType, setCurrentBrushType } = useDrawing();
     return (
         <Dropdown
             placement="right"
@@ -46,6 +61,20 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
+                        <span>Loại bút</span>
+                        <div className="flex items-center gap-2">
+                            {dataPenTypes.map((pen) => (
+                                <ButtonIcon
+                                    key={pen.name}
+                                    Icon={pen.icon}
+                                    onClick={() => setCurrentBrushType(pen.type)}
+                                    isActive={currentBrushType === pen.type}
+                                />
+                            ))}
+                        </div>
+
+                    </div>
+                    <div className="flex flex-col gap-2">
                         <span>Độ dày nét</span>
                         <InputRange onChange={onBrushSizeChange} />
                     </div>
@@ -55,7 +84,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
             {({ isOpen }) => (
                 <ButtonIcon
                     onClick={onClick}
-                    Icon={iconSet.PencelOutline}
+                    Icon={iconSet.PencilOutlineIcon}
                     isActive={isOpen || isActive}
                 />
             )}
@@ -75,8 +104,7 @@ const ChipColor = ({ color, onClick, checked }: ChipColorProps) => {
         style={{ backgroundColor: color }}
         onClick={onClick}
     >
-        {checked && ("v")}
-        {/* {checked && <iconSet.BsCheck />} */}
+        {checked && <iconSet.CheckIcon className="w-4 h-4" />}
         {/* {checked && <BsCheck className="w-6 h-6 text-white" />} */}
     </div >
     );

@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Point } from './types/drawing';
 import { TextEditor } from './TextEditor';
-import { useDrawing } from '../contexts/DrawingContext';
+import { BRUSH_TYPE, useDrawing } from '../contexts/DrawingContext';
 import { LaserPointer } from './LaserPointer';
 
 export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
@@ -38,6 +38,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
     const [panStart, setPanStart] = useState<Point | null>(null);
     const [canvasOffset, setCanvasOffset] = useState<Point>({ x: 0, y: 0 });
     const zoomFactor = zoomLevel / 100;
+    const [random, setRandom] = useState(Math.random());
 
     useEffect(() => {
         if (ref && typeof ref === 'object' && 'current' in ref) {
@@ -92,34 +93,43 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         tempContext.scale(zoomFactor, zoomFactor);
 
         // Vẽ ảnh nền trên canvas chính
-        currentPage.commands.forEach((command) => {
+        currentPage?.commands?.forEach((command) => {
             if (command.type === 'image' && command.image) {
                 context.drawImage(command.image, 0, 0, canvas.width / zoomFactor, canvas.height / zoomFactor);
             }
         });
 
         // Vẽ các lệnh khác trên canvas tạm
-        currentPage.commands.forEach((command) => {
+        currentPage?.commands?.forEach((command) => {
             if (command.type === 'image') return; // Bỏ qua ảnh
             tempContext.beginPath();
             tempContext.lineCap = 'round';
             tempContext.lineJoin = 'round';
 
             // Áp dụng hiệu ứng theo loại bút
-            if (command.brushType === 'paint') {
-                tempContext.globalAlpha = 0.5;
-                tempContext.lineWidth = (command.size * 2) / zoomFactor;
-            } else if (command.brushType === 'marker') {
-                tempContext.globalAlpha = 0.7;
-                tempContext.lineWidth = command.size / zoomFactor;
-            } else if (command.brushType === 'pen') {
-                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                tempContext.globalAlpha = 1;
-            } else {
-                tempContext.globalAlpha = 1;
-                tempContext.lineWidth = command.size / zoomFactor;
-            }
+            switch (command.brushType) {
+                case BRUSH_TYPE.PAINT_PEN:
+                    tempContext.globalAlpha = 0.5;
+                    tempContext.lineWidth = (command.size * 2) / zoomFactor;
+                    break;
 
+                case BRUSH_TYPE.MEMORY_PEN:
+                case BRUSH_TYPE.COLOR_PEN:
+                    tempContext.globalAlpha = 0.7;
+                    tempContext.lineWidth = command.size / zoomFactor;
+                    break;
+
+                case BRUSH_TYPE.PENCIL:
+                    tempContext.globalAlpha = 0.6;
+                    tempContext.lineWidth = (command.size * 0.8) / zoomFactor;
+                    break;
+
+                case BRUSH_TYPE.PEN:
+                default:
+                    tempContext.globalAlpha = 1;
+                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
+                    break;
+            }
             if (command.type === 'freehand' || command.type === 'erase') {
                 tempContext.moveTo(command.points![0].x, command.points![0].y);
                 command.points!.forEach((point) => tempContext.lineTo(point.x, point.y));
@@ -130,16 +140,19 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                 tempContext.moveTo(command.fromX!, command.fromY!);
                 tempContext.lineTo(command.toX!, command.toY!);
                 tempContext.strokeStyle = command.color;
+                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
                 tempContext.globalCompositeOperation = 'source-over';
                 tempContext.stroke();
             } else if (command.type === 'rectangle') {
                 tempContext.strokeRect(command.x!, command.y!, command.width!, command.height!);
                 tempContext.strokeStyle = command.color;
+                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
                 tempContext.globalCompositeOperation = 'source-over';
                 tempContext.stroke();
             } else if (command.type === 'circle') {
                 tempContext.arc(command.x!, command.y!, command.radius!, 0, 2 * Math.PI);
                 tempContext.strokeStyle = command.color;
+                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
                 tempContext.globalCompositeOperation = 'source-over';
                 tempContext.stroke();
             }
@@ -198,18 +211,28 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             tempContext.lineCap = 'round';
             tempContext.lineJoin = 'round';
 
-            if (currentAction.brushType === 'paint') {
-                tempContext.globalAlpha = 0.5;
-                tempContext.lineWidth = (currentAction.size * 2) / zoomFactor;
-            } else if (currentAction.brushType === 'marker') {
-                tempContext.globalAlpha = 0.7;
-                tempContext.lineWidth = currentAction.size / zoomFactor;
-            } else if (currentAction.brushType === 'pen') {
-                tempContext.lineWidth = (currentAction.size * 0.5) / zoomFactor;
-                tempContext.globalAlpha = 1;
-            } else {
-                tempContext.globalAlpha = 1;
-                tempContext.lineWidth = currentAction.size / zoomFactor;
+            switch (currentAction.brushType) {
+                case BRUSH_TYPE.PAINT_PEN:
+                    tempContext.globalAlpha = 0.5;
+                    tempContext.lineWidth = (currentAction.size * 2) / zoomFactor;
+                    break;
+
+                case BRUSH_TYPE.MEMORY_PEN:
+                case BRUSH_TYPE.COLOR_PEN:
+                    tempContext.globalAlpha = 0.7;
+                    tempContext.lineWidth = currentAction.size / zoomFactor;
+                    break;
+
+                case BRUSH_TYPE.PENCIL:
+                    tempContext.globalAlpha = 0.6;
+                    tempContext.lineWidth = (currentAction.size * 0.8) / zoomFactor;
+                    break;
+
+                case BRUSH_TYPE.PEN:
+                default:
+                    tempContext.globalAlpha = 1;
+                    tempContext.lineWidth = (currentAction.size * 0.5) / zoomFactor;
+                    break;
             }
 
             if (currentAction.type === 'freehand' || currentAction.type === 'erase') {
@@ -243,7 +266,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         // Sao chép nội dung từ canvas tạm sang canvas chính với tỷ lệ đúng
         context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
 
-    }, [currentPage, currentAction, zoomLevel]);
+    }, [currentPage, currentAction, zoomLevel, random]);
     const getAdjustedCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left) / zoomFactor;
@@ -253,6 +276,10 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         setClicking(true);
+        setIsDrawing(true);
+        const { x, y } = getAdjustedCoordinates(e);
+        const rect = e.currentTarget.getBoundingClientRect();
+
         if (isSpacePressed || currentTool === 'pan') {
             e.preventDefault();
             setIsPanning(true);
@@ -262,7 +289,6 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             }
             return;
         }
-        const { x, y } = getAdjustedCoordinates(e);
 
         if (currentTool === 'text' && (!textValue || !showTextInput)) {
             // Chỉ set vị trí text khi bắt đầu vẽ text mới
@@ -271,15 +297,13 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             return;
         }
 
-        setIsDrawing(true);
-
         if (currentTool === 'pencil') {
             setCurrentAction({
                 type: 'freehand',
                 points: [{ x, y }],
                 color: currentColor,
                 size: currentBrushSize,
-                brushType: currentBrushType as 'pencil' | 'pen' | 'marker' | 'paint',
+                brushType: currentBrushType,
             });
         } else if (currentTool === 'eraser') {
             setCurrentAction({
@@ -322,7 +346,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
         // Luôn cập nhật vị trí chuột
         const rect = canvasRef.current!.getBoundingClientRect();
-
+        // const { x: mouseX, y: mouseY } = getAdjustedCoordinates(e);
         // Lấy vị trí chuột tương đối so với canvas container
         const mouseX = (e.clientX - rect.left);
         const mouseY = (e.clientY - rect.top);
@@ -394,6 +418,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
     };
 
     useEffect(() => {
+
         const canvas = canvasRef.current!;
         const tempCanvas = tempCanvasRef.current!;
         const resizeCanvas = () => {
@@ -411,6 +436,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             canvas.style.height = `${rect.height}px`;
             tempCanvas.style.width = `${rect.width}px`;
             tempCanvas.style.height = `${rect.height}px`;
+            setRandom(Math.random()); // Cập nhật random để trigger re-render
         };
 
         resizeCanvas();
@@ -437,7 +463,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             >
                 <canvas
                     ref={canvasRef}
-                    className="absolute top-0 left-0 w-full h-full"
+                    className="absolute top-0 left-0 w-full h-full bg-gray-100"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
@@ -448,7 +474,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                     className="absolute top-0 left-0 w-full h-full pointer-events-none"
                 />
                 {showTextInput && textPosition && (
-                    <TextEditor position={textPosition} />
+                    <TextEditor position={{ x: textPosition.x, y: textPosition.y }} />
                 )}
                 {<LaserPointer
                     x={mousePosition?.x || 0}
@@ -458,6 +484,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                     tool={currentTool}
                 />}
             </div>
+
         </div>
     );
 });

@@ -1,13 +1,14 @@
-import { useTheme } from "../theme-context";
+import { useTheme } from "../contexts/theme-context";
 
-interface IProps {
+export interface IButtonIconProps {
     Icon: React.ComponentType<any>;
     isActive?: boolean;
     onClick?: () => void;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     title?: string;
 }
 
-export const ButtonIcon = ({ Icon, isActive, onClick, title }: IProps) => {
+const ButtonIcon = ({ Icon, isActive, onClick, title, onChange }: IButtonIconProps) => {
     const { config } = useTheme();
     const style = config.components.buttonIcon;
 
@@ -17,6 +18,7 @@ export const ButtonIcon = ({ Icon, isActive, onClick, title }: IProps) => {
         title={title}
     >
         <Icon className="w-5 h-5" />
-    </button>
+    </button >
     );
 };
+export default ButtonIcon;

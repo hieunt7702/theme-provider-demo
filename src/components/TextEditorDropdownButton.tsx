@@ -1,7 +1,7 @@
 import { BsCheck } from "react-icons/bs";
-import { useTheme } from "../theme-context";
+import { useTheme } from "../contexts/theme-context";
 import { useDrawing } from "../contexts/DrawingContext";
-import { ButtonIcon } from "./ButtonIcon"
+import ButtonIcon from "./ButtonIcon"
 import Dropdown from "./Dropdown"
 
 interface TextEditorDropdownButtonProps {
@@ -139,7 +139,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
             {({ isOpen }) => (
                 <ButtonIcon
                     onClick={onClick}
-                    Icon={iconSet.BsFonts}
+                    Icon={iconSet.FontsIcon}
                     isActive={isOpen || isActive}
                 />
             )}
@@ -148,13 +148,14 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
 };
 
 const ChipColor = ({ color, onClick, checked }: ChipColorProps) => {
+    const { iconSet } = useTheme();
     return (
         <button
             className="w-6 h-6 flex-none rounded cursor-pointer hover:opacity-90 active:opacity-80 relative flex items-center justify-center text-white"
             style={{ backgroundColor: color }}
             onClick={onClick}
         >
-            {checked && <span>V</span>}
+            {checked && <iconSet.CheckIcon className="w-4 h-4" />}
         </button>
     );
 };

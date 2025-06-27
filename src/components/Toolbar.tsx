@@ -1,7 +1,8 @@
 import React from 'react';
-import { useDrawing } from '../contexts/DrawingContext';
+import { BRUSH_TYPE, useDrawing } from '../contexts/DrawingContext';
 
-const Toolbar = () => {    const {
+const Toolbar = () => {
+    const {
         setCurrentTool,
         setCurrentBrushType,
         setCurrentColor,
@@ -20,19 +21,15 @@ const Toolbar = () => {    const {
         zoomIn,
         zoomOut,
         resetZoom,
+        addPage
     } = useDrawing();
 
-    const addPage = () => {
-        const maxId = Math.max(...pages.map(page => page.id));
-        setPages([...pages, { id: maxId + 1, commands: [] }]);
-        setCurrentPageId(maxId + 1);
-    };
 
     return (
         <div className="flex flex-wrap gap-2 p-4 bg-gray-100">
             <select
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onChange={(e) => setCurrentBrushType(e.target.value)}
+                onChange={(e) => setCurrentBrushType(e.target.value as BRUSH_TYPE)}
             >
                 <option value="pencil">Bút chì</option>
                 <option value="pen">Bút mực</option>
@@ -139,7 +136,7 @@ const Toolbar = () => {    const {
             >
                 {pages.map((page) => (
                     <option key={page.id} value={page.id}>
-                        Trang {page.id}
+                        {page.name}
                     </option>
                 ))}
             </select>

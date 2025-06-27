@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../theme-context';
+import { useTheme } from '../contexts/theme-context';
 
 interface Props {
     children: React.ReactNode;

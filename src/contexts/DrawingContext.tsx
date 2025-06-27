@@ -1,3 +1,4 @@
+import { jsPDF } from 'jspdf';
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useRef, useEffect } from 'react';
 import { Page, DrawingCommand, Point } from '../components/types/drawing';
 
@@ -5,8 +6,8 @@ interface DrawingContextType {
     // Tool states
     currentTool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan';
     setCurrentTool: (tool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan') => void;
-    currentBrushType: string;
-    setCurrentBrushType: (brushType: string) => void;
+    currentBrushType: BRUSH_TYPE;
+    setCurrentBrushType: (brushType: BRUSH_TYPE) => void;
     currentColor: string;
     setCurrentColor: (color: string) => void;
     currentBrushSize: number;
@@ -14,6 +15,9 @@ interface DrawingContextType {
     // Page states
     pages: Page[];
     setPages: Dispatch<SetStateAction<Page[]>>;
+    addPage: () => void;
+    deletePage: (id: number) => void;
+    renamePage: (id: number, newName: string) => void;
     currentPageId: number;
     setCurrentPageId: (id: number) => void;
     currentPage: Page;
@@ -82,23 +86,32 @@ interface DrawingContextType {
     handleUpdateSelection: (point: Point) => void;
     handleFinishSelect: () => void;
     updateSelectedElements: (offsetX: number, offsetY: number) => void;
+    copyAsImage: () => void;
 
     //
     isClicking: boolean;
     setClicking: Dispatch<SetStateAction<boolean>>;
 }
 
+export enum BRUSH_TYPE {
+    PENCIL = 'pencil',
+    MEMORY_PEN = 'memory_pen',
+    COLOR_PEN = 'color_pen',
+    PAINT_PEN = 'paint_pen',
+    PEN = 'pen',
+}
+
 const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 
 export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Tool states
-    const [currentTool, setCurrentTool] = useState<'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan'>('pencil');
-    const [currentBrushType, setCurrentBrushType] = useState('pencil');
+    const [currentTool, setCurrentTool] = useState<'select' | "pencil" | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan'>('pan');
+    const [currentBrushType, setCurrentBrushType] = useState<BRUSH_TYPE>(BRUSH_TYPE.PENCIL);
     const [currentColor, setCurrentColor] = useState('#000000');
     const [currentBrushSize, setCurrentBrushSize] = useState(5);
 
     // Page states
-    const [pages, setPages] = useState<Page[]>([{ id: 1, commands: [] }]);
+    const [pages, setPages] = useState<Page[]>([{ id: 1, name: 'Bảng trắng 1', commands: [] }]);
     const [currentPageId, setCurrentPageId] = useState(1);
     const currentPage = pages.find((page) => page.id === currentPageId)!;
     const [isClicking, setClicking] = useState(false);
@@ -199,7 +212,8 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const resetZoom = () => {
         setZoomLevel(100);
-    }; const handleTextSubmit = () => {
+    };
+    const handleTextSubmit = () => {
         if (textValue && textPosition) {
             setCurrentPage((prev) => ({
                 ...prev,
@@ -231,26 +245,31 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
             link.click();
         }
     };
-
     const saveAsPDF = () => {
         if (canvasRef.current) {
-            const dataURL = canvasRef.current.toDataURL('image/png');
-            const latexContent = `
-                \\documentclass[a4paper]{article}
-                \\usepackage{graphicx}
-                \\usepackage[margin=0.5in]{geometry}
-                \\begin{document}
-                \\centering
-                \\includegraphics[width=\\textwidth]{${dataURL}}
-                \\end{document}
-            `;
-            const blob = new Blob([latexContent], { type: 'text/latex' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `drawing-page-${currentPageId}.pdf`;
-            link.click();
-            URL.revokeObjectURL(url);
+            // Create new jsPDF instance in landscape orientation if canvas is wider than tall
+            const orientation = canvasRef.current.width > canvasRef.current.height ? 'l' : 'p';
+            const pdf = new jsPDF(orientation, 'mm', 'a4');
+
+            // Get canvas data URL
+            const imgData = canvasRef.current.toDataURL('image/png', 1.0);
+
+            // Calculate PDF dimensions
+            const pdfWidth = orientation === 'l' ? 297 : 210;  // A4 dimensions in mm
+            const pdfHeight = orientation === 'l' ? 210 : 297;
+
+            // Calculate scaling to fit image within PDF while maintaining aspect ratio
+            const imgWidth = canvasRef.current.width;
+            const imgHeight = canvasRef.current.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+            const imgY = (pdfHeight - imgHeight * ratio) / 2;
+
+            // Add image to PDF
+            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+
+            // Save the PDF
+            pdf.save(`drawing-page-${currentPageId}.pdf`);
         }
     };
 
@@ -359,6 +378,54 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         }));
     };
 
+    const copyAsImage = async () => {
+        if (!canvasRef.current) return;
+
+        try {
+            // Convert canvas to blob
+            const blob = await new Promise<Blob>((resolve) =>
+                canvasRef.current!.toBlob((blob) => resolve(blob!))
+            );
+
+            // Create ClipboardItem and copy to clipboard
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+        } catch (err) {
+            console.error('Failed to copy image:', err);
+        }
+    };
+
+    const addPage = () => {
+        const maxId = Math.max(...pages.map(page => page.id));
+        setPages([...pages, { id: maxId + 1, name: `Bảng trắng ${maxId + 1}`, commands: [] }]);
+        setCurrentPageId(maxId + 1);
+    };
+
+    const deletePage = (id: number) => {
+        if (currentPageId === id) {
+            const nextPage = pages.find(page => page.id !== id);
+            if (nextPage) {
+                setPages(pages.filter(page => page.id !== id));
+                setCurrentPageId(nextPage.id);
+                setCurrentPage(nextPage);
+            } else {
+                setPages([{ id: 1, name: 'Bảng trắng 1', commands: [] }]);
+                setCurrentPage({ id: 1, name: 'Bảng trắng 1', commands: [] });
+                setCurrentPageId(1);
+            }
+            return;
+        }
+        setPages(pages.filter(page => page.id !== id));
+
+    }
+
+    const renamePage = (id: number, newName: string) => {
+        setPages(pages.map(page =>
+            page.id === id ? { ...page, name: newName } : page
+        ));
+    }
+
+
     const value = {
         currentTool,
         setCurrentTool,
@@ -370,6 +437,9 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCurrentBrushSize,
         pages,
         setPages,
+        addPage,
+        deletePage,
+        renamePage,
         currentPageId,
         setCurrentPageId,
         currentPage,
@@ -416,7 +486,8 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         mousePosition,
         setMousePosition,
         isClicking,
-        setClicking
+        setClicking,
+        copyAsImage,
     };
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>;

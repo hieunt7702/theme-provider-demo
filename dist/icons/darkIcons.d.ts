@@ -27,11 +27,11 @@ export declare const darkIcons: {
     ExportIcon: import('react-icons').IconType;
     PDFIcon: import('react-icons').IconType;
     ImageIcon: import('react-icons').IconType;
-    NextIcon: import('react-icons').IconType;
+    ArrowRightIcon: import('react-icons').IconType;
     MoreIcon: import('react-icons').IconType;
     MultipleCardsIcon: import('react-icons').IconType;
     AddBoardIcon: import('react-icons').IconType;
-    DivideIcon: import('react-icons').IconType;
+    SplineIcon: import('react-icons').IconType;
     CleanIcon: import('react-icons').IconType;
     ImageUpIcon: import('react-icons').IconType;
 };

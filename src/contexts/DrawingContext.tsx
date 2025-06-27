@@ -1,13 +1,15 @@
 import { jsPDF } from 'jspdf';
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useRef, useEffect } from 'react';
-import { Page, DrawingCommand, Point } from '../components/types/drawing';
+import { Page, DrawingCommand, Point, ToolType, GEOMETRY_TYPE } from '../components/types/drawing';
 
 interface DrawingContextType {
     // Tool states
-    currentTool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan';
-    setCurrentTool: (tool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan') => void;
+    currentTool: ToolType;
+    setCurrentTool: (tool: ToolType) => void;
     currentBrushType: BRUSH_TYPE;
     setCurrentBrushType: (brushType: BRUSH_TYPE) => void;
+    currentGeometryType: GEOMETRY_TYPE;
+    setCurrentGeometryType: (geometryType: GEOMETRY_TYPE) => void;
     currentColor: string;
     setCurrentColor: (color: string) => void;
     currentBrushSize: number;
@@ -58,16 +60,6 @@ interface DrawingContextType {
     zoomLevel: number;
     setZoomLevel: Dispatch<SetStateAction<number>>;
 
-    // Selection states
-    selectedElements: DrawingCommand[];
-    setSelectedElements: Dispatch<SetStateAction<DrawingCommand[]>>;
-    selectionArea: { x: number; y: number; width: number; height: number } | null;
-    setSelectionArea: Dispatch<SetStateAction<{ x: number; y: number; width: number; height: number } | null>>;
-    isDragging: boolean;
-    setIsDragging: Dispatch<SetStateAction<boolean>>;
-    dragStart: Point | null;
-    setDragStart: Dispatch<SetStateAction<Point | null>>;
-
     // Canvas ref
     canvasRef: React.RefObject<HTMLCanvasElement | null>;
 
@@ -82,10 +74,6 @@ interface DrawingContextType {
     saveAsPNG: () => void;
     saveAsPDF: () => void;
     importImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleStartSelect: (point: Point) => void;
-    handleUpdateSelection: (point: Point) => void;
-    handleFinishSelect: () => void;
-    updateSelectedElements: (offsetX: number, offsetY: number) => void;
     copyAsImage: () => void;
 
     //
@@ -105,10 +93,11 @@ const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 
 export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Tool states
-    const [currentTool, setCurrentTool] = useState<'select' | "pencil" | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan'>('pan');
+    const [currentTool, setCurrentTool] = useState<ToolType>(ToolType.PAN);
     const [currentBrushType, setCurrentBrushType] = useState<BRUSH_TYPE>(BRUSH_TYPE.PENCIL);
+    const [currentGeometryType, setCurrentGeometryType] = useState<GEOMETRY_TYPE>(GEOMETRY_TYPE.LINE);
     const [currentColor, setCurrentColor] = useState('#000000');
-    const [currentBrushSize, setCurrentBrushSize] = useState(5);
+    const [currentBrushSize, setCurrentBrushSize] = useState(2);
 
     // Page states
     const [pages, setPages] = useState<Page[]>([{ id: 1, name: 'Bảng trắng 1', commands: [] }]);
@@ -148,12 +137,6 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Zoom states
     const [zoomLevel, setZoomLevel] = useState(100);
 
-    // Selection states
-    const [selectedElements, setSelectedElements] = useState<DrawingCommand[]>([]);
-    const [selectionArea, setSelectionArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState<Point | null>(null);
-
     // Mouse position tracking
     const [mousePosition, setMousePosition] = useState<Point | null>(null);
 
@@ -188,10 +171,6 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setUndoStack([]);
         setCurrentAction(null);
         setIsDrawing(false);
-        setSelectedElements([]);
-        setSelectionArea(null);
-        setIsDragging(false);
-        setDragStart(null);
     };
 
     useEffect(() => {
@@ -220,7 +199,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                 commands: [
                     ...prev.commands,
                     {
-                        type: 'text',
+                        type: ToolType.TEXT,
                         x: textPosition.x,
                         y: textPosition.y,
                         text: textValue,
@@ -283,99 +262,11 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                     ...prev,
                     commands: [
                         ...prev.commands,
-                        { type: 'image', image: img, color: '#000000', size: 1 },
+                        { type: ToolType.IMAGE, image: img, color: '#000000', size: 1 },
                     ],
                 }));
             };
         }
-    };
-
-    const handleStartSelect = (point: Point) => {
-        setSelectionArea({ x: point.x, y: point.y, width: 0, height: 0 });
-        setSelectedElements([]);
-    };
-
-    const handleUpdateSelection = (point: Point) => {
-        if (!selectionArea) return;
-
-        setSelectionArea({
-            x: Math.min(selectionArea.x, point.x),
-            y: Math.min(selectionArea.y, point.y),
-            width: Math.abs(point.x - selectionArea.x),
-            height: Math.abs(point.y - selectionArea.y)
-        });
-    };
-
-    const handleFinishSelect = () => {
-        if (!selectionArea) return;
-
-        const selected = currentPage.commands.filter(cmd => {
-            if (cmd.type === 'freehand' || cmd.type === 'erase') {
-                return cmd.points?.some(point =>
-                    point.x >= selectionArea.x &&
-                    point.x <= selectionArea.x + selectionArea.width &&
-                    point.y >= selectionArea.y &&
-                    point.y <= selectionArea.y + selectionArea.height
-                );
-            } else if (cmd.type === 'line') {
-                return (cmd.fromX! >= selectionArea.x &&
-                    cmd.fromX! <= selectionArea.x + selectionArea.width &&
-                    cmd.fromY! >= selectionArea.y &&
-                    cmd.fromY! <= selectionArea.y + selectionArea.height) ||
-                    (cmd.toX! >= selectionArea.x &&
-                        cmd.toX! <= selectionArea.x + selectionArea.width &&
-                        cmd.toY! >= selectionArea.y &&
-                        cmd.toY! <= selectionArea.y + selectionArea.height);
-            } else if (cmd.type === 'rectangle' || cmd.type === 'text' || cmd.type === 'image') {
-                return cmd.x! >= selectionArea.x &&
-                    cmd.x! + (cmd.width || 0) <= selectionArea.x + selectionArea.width &&
-                    cmd.y! >= selectionArea.y &&
-                    cmd.y! + (cmd.height || 0) <= selectionArea.y + selectionArea.height;
-            } else if (cmd.type === 'circle') {
-                return cmd.x! >= selectionArea.x &&
-                    cmd.x! <= selectionArea.x + selectionArea.width &&
-                    cmd.y! >= selectionArea.y &&
-                    cmd.y! <= selectionArea.y + selectionArea.height;
-            }
-            return false;
-        });
-
-        setSelectedElements(selected);
-        setSelectionArea(null);
-    };
-
-    const updateSelectedElements = (offsetX: number, offsetY: number) => {
-        setCurrentPage(prevPage => ({
-            ...prevPage,
-            commands: prevPage.commands.map(cmd => {
-                if (!selectedElements.includes(cmd)) return cmd;
-
-                if (cmd.type === 'freehand' || cmd.type === 'erase') {
-                    return {
-                        ...cmd,
-                        points: cmd.points!.map(point => ({
-                            x: point.x + offsetX,
-                            y: point.y + offsetY
-                        }))
-                    };
-                } else if (cmd.type === 'line') {
-                    return {
-                        ...cmd,
-                        fromX: cmd.fromX! + offsetX,
-                        fromY: cmd.fromY! + offsetY,
-                        toX: cmd.toX! + offsetX,
-                        toY: cmd.toY! + offsetY
-                    };
-                } else if (cmd.type === 'rectangle' || cmd.type === 'text' || cmd.type === 'circle' || cmd.type === 'image') {
-                    return {
-                        ...cmd,
-                        x: cmd.x! + offsetX,
-                        y: cmd.y! + offsetY
-                    };
-                }
-                return cmd;
-            })
-        }));
     };
 
     const copyAsImage = async () => {
@@ -431,6 +322,8 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCurrentTool,
         currentBrushType,
         setCurrentBrushType,
+        currentGeometryType,
+        setCurrentGeometryType,
         currentColor,
         setCurrentColor,
         currentBrushSize,
@@ -460,14 +353,6 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setTextStyle,
         zoomLevel,
         setZoomLevel,
-        selectedElements,
-        setSelectedElements,
-        selectionArea,
-        setSelectionArea,
-        isDragging,
-        setIsDragging,
-        dragStart,
-        setDragStart,
         canvasRef,
         undo,
         redo,
@@ -479,10 +364,6 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         saveAsPNG,
         saveAsPDF,
         importImage,
-        handleStartSelect,
-        handleUpdateSelection,
-        handleFinishSelect,
-        updateSelectedElements,
         mousePosition,
         setMousePosition,
         isClicking,

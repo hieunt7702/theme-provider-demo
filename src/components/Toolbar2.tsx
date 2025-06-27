@@ -1,5 +1,5 @@
 import { useTheme } from "../contexts/theme-context";
-import { useDrawing } from "../contexts/DrawingContext";
+import { BRUSH_TYPE, useDrawing } from "../contexts/DrawingContext";
 // import { BoardDropdownButton } from "./BoardDropdownButton";
 import ButtonIcon from "./ButtonIcon";
 import Dropdown from "./Dropdown";
@@ -7,6 +7,8 @@ import { MenuDropdownButton } from "./MenuDropdownButton";
 import { PenDropdownButton } from "./PenDropdownButton";
 import { TextEditorDropdownButton } from "./TextEditorDropdownButton";
 import { PageDropdownButton } from "./PageDropdownButton";
+import { ToolType } from "./types/drawing";
+import { GeometryDropdownButton } from "./GeometryDropdownButton";
 
 export const Toolbar2 = () => {
     const {
@@ -34,12 +36,13 @@ export const Toolbar2 = () => {
         EraserIcon,
         PlusIcon,
         MinusIcon,
-        SquareIcon,
+        SquareDashedIcon,
         UndoIcon,
         RedoIcon,
-        DivideIcon,
+        SplineIcon,
         CleanIcon,
-        ImageUpIcon
+        ImageUpIcon,
+        PartyPopperIcon
     } = iconSet;
 
     return (
@@ -57,20 +60,39 @@ export const Toolbar2 = () => {
                 <div className="w-10 flex-none flex flex-col items-center gap-2 bg-white rounded shadow-custom-11 py-2" style={{ pointerEvents: 'auto' }}>
                     <ButtonIcon
                         Icon={HandleIcon}
-                        onClick={() => setCurrentTool('pan')}
-                        isActive={currentTool === 'pan'}
+                        onClick={() => setCurrentTool(ToolType.PAN)}
+                        isActive={currentTool === ToolType.PAN}
                         title="Pan"
                     />
                     <PenDropdownButton
-                        isActive={currentTool === 'pencil'}
-                        onClick={() => setCurrentTool('pencil')}
+                        isActive={currentTool === ToolType.PENCIL}
+                        onClick={() => setCurrentTool(ToolType.PENCIL)}
+                        onColorChange={setCurrentColor}
+                        onBrushSizeChange={setCurrentBrushSize}
+                        currentColor={currentColor}
+                    />
+                    <TextEditorDropdownButton
+                        isActive={currentTool === ToolType.TEXT}
+                        onClick={() => setCurrentTool(ToolType.TEXT)}
+                    />
+                    <GeometryDropdownButton
+                        isActive={currentTool === ToolType.GEOMETRY}
+                        onClick={() => setCurrentTool(ToolType.GEOMETRY)}
                         onColorChange={setCurrentColor}
                         onBrushSizeChange={setCurrentBrushSize}
                         currentColor={currentColor}
                     />
                     <ButtonIcon
+                        Icon={SquareDashedIcon}
+                        title="Chọn vùng"
+                    />
+                    <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>
+                        <ImageUpIcon className="w-5 h-5" />
+                        <input type="file" accept="image/*" onChange={importImage} className="hidden" />
+                    </label>
+                    <ButtonIcon
                         Icon={EraserIcon}
-                        onClick={() => setCurrentTool('eraser')}
+                        onClick={() => setCurrentTool(ToolType.ERASER)}
                         isActive={currentTool === 'eraser'}
                         title="Tẩy"
                     />
@@ -79,32 +101,19 @@ export const Toolbar2 = () => {
                         onClick={clear}
                         title="Xóa bảng"
                     />
-                    <TextEditorDropdownButton
-                        isActive={currentTool === 'text'}
-                        onClick={() => setCurrentTool('text')}
-                    />
                     <ButtonIcon
-                        Icon={DivideIcon}
-                        onClick={() => setCurrentTool('line')}
-                        isActive={currentTool === 'line'}
-                        title="Line"
+                        Icon={PartyPopperIcon}
+                        onClick={clear}
+                        title="Xóa bảng"
                     />
-                    <ButtonIcon
-                        Icon={SquareIcon}
-                        onClick={resetZoom}
-                        title="Reset View"
-                    />
-                    <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>
-                        <ImageUpIcon className="w-5 h-5" />
-                        <input type="file" accept="image/*" onChange={importImage} className="hidden" />
-                    </label>
+
                 </div>
                 <div className="w-10 flex-none flex flex-col items-center gap-2 bg-white rounded shadow-custom-11 py-2" style={{ pointerEvents: 'auto' }}>
                     <ButtonIcon Icon={UndoIcon} onClick={undo} title="Undo" />
                     <ButtonIcon Icon={RedoIcon} onClick={redo} title="Redo" />
                     <div className="flex flex-col items-center gap-1">
                         <ButtonIcon Icon={MinusIcon} onClick={zoomOut} title="Zoom Out" />
-                        <span className={`text-xs`}>{zoomLevel}%</span>
+                        <span className={`text-xs`}>{zoomLevel}</span>
                         <ButtonIcon Icon={PlusIcon} onClick={zoomIn} title="Zoom In" />
                     </div>
                 </div>

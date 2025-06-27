@@ -30,11 +30,11 @@ interface IconSet {
     ExportIcon: React.ComponentType<any>;
     PDFIcon: React.ComponentType<any>;
     ImageIcon: React.ComponentType<any>;
-    NextIcon: React.ComponentType<any>;
+    ArrowRightIcon: React.ComponentType<any>;
     MoreIcon: React.ComponentType<any>;
     MultipleCardsIcon: React.ComponentType<any>;
     AddBoardIcon: React.ComponentType<any>;
-    DivideIcon: React.ComponentType<any>;
+    SplineIcon: React.ComponentType<any>;
     CleanIcon: React.ComponentType<any>;
     ImageUpIcon: React.ComponentType<any>;
 }

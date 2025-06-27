@@ -6,7 +6,7 @@ import Dropdown from "./Dropdown"
 export const PageDropdownButton = () => {
     const { iconSet, config } = useTheme();
     const {
-        NextIcon,
+        ArrowRightIcon,
         MoreIcon,
         MultipleCardsIcon,
         AddBoardIcon,
@@ -22,10 +22,10 @@ export const PageDropdownButton = () => {
                         onClick={addPage}
                         className={`w-full h-8 flex-none ${config?.components?.buttonIcon}  px-3 py-1 rounded cursor-pointer flex items-center justify-between gap-3`}>
                         <div className="flex items-center gap-3">
-                            <AddBoardIcon className="w-5 h-5 flex-none" />
+                            <AddBoardIcon className="w-5 h-5 flex-none" strokeWidth={1.6}/>
                             <span className="flex-none">Thêm bảng</span>
                         </div>
-                        <NextIcon className={`w-5 h-5 flex-none`} />
+                        <ArrowRightIcon className={`w-5 h-5 flex-none`} strokeWidth={1.6}/>
                     </div>
                     {pages.map((page, index) => (
                         <div className="w-full">
@@ -53,7 +53,7 @@ export const PageDropdownButton = () => {
                                 )}
                             >{({ isOpen }) => (
                                 <div
-                                    className={`w-full h-8 flex-none ${config?.components?.buttonIcon} ${(isOpen || currentPageId === page.id) ? "!bg-pink-200" : ""} px-3 py-1 rounded cursor-pointer flex items-center justify-between gap-5`}>
+                                    className={`w-full h-8 flex-none ${config?.components?.buttonIcon} ${(isOpen || currentPageId === page.id) ? config?.components?.buttonSelected : ""} px-3 py-1 rounded cursor-pointer flex items-center justify-between gap-5`}>
                                     <span
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -61,7 +61,7 @@ export const PageDropdownButton = () => {
                                             setCurrentPageId(page.id)
                                         }}
                                         className="flex-none cursor-pointer">{page?.name}</span>
-                                    <MoreIcon className={`w-5 h-5 flex-none`} />
+                                    <MoreIcon className={`w-5 h-5 flex-none`} strokeWidth={1.6}/>
                                 </div>)}
                             </Dropdown>
                         </div>

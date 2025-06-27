@@ -1,55 +1,53 @@
-import { FaHome, FaCog, FaUser, FaFont, FaRegSquare, FaBold, FaItalic, FaUnderline, FaRegCircle, FaCheck, FaRegImages, FaFileExport, FaRegFilePdf, FaRegImage } from "react-icons/fa";
-import { FiPlus } from "react-icons/fi";
-import { GrRedo, GrUndo } from "react-icons/gr";
-import { HiOutlinePencil } from "react-icons/hi";
-import { IoHandRightOutline, IoMenu } from "react-icons/io5";
-import { RxDividerHorizontal } from "react-icons/rx";
-import { RiCheckboxMultipleBlankLine } from "react-icons/ri";
-import { LiaPlusSolid, LiaMinusSolid, LiaUndoSolid, LiaRedoSolid, LiaPenAltSolid } from "react-icons/lia";
-import { FaCloudArrowDown } from "react-icons/fa6";
-import { LuEraser, LuImageUp } from "react-icons/lu";
-import { TbBoxMultiple1, TbRectangle } from "react-icons/tb";
-import { IoMdMenu } from "react-icons/io";
-import { MdOutlineAddToPhotos, MdOutlineCleaningServices, MdOutlineKeyboardArrowRight } from "react-icons/md";
-import { TfiMore } from "react-icons/tfi";
-import { TiPen } from "react-icons/ti";
-import { HiOutlinePaintBrush } from "react-icons/hi2";
+import { FaHome, FaCog, FaUser, FaCheck } from "react-icons/fa";
+import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { LiaPenFancySolid } from "react-icons/lia";
-
+import { Bold, Brush, BrushCleaning, Check, ChevronDown, ChevronRight, Circle, CloudDownload, CornerUpLeft, CornerUpRight, Ellipsis, Eraser, FilePlus2, FileText, FolderInput, Hand, Heart, Highlighter, Image, Images, ImageUp, Italic, Layers, Menu, Minus, MoveRight, PaintBucket, PartyPopper, Pen, PenLine, Plus, Shredder, Slash, Spline, Square, SquareDashedMousePointer, Trash, Triangle, Type, Underline } from 'lucide-react';
+import { Rectangle } from "phosphor-react";
 export const defaultIcons = {
     HomeIcon: FaHome,
     SettingsIcon: FaCog,
     UserIcon: FaUser,
-    HandleIcon: IoHandRightOutline,
-    PencilOutlineIcon: HiOutlinePencil,
-    MemoryPenOutlineIcon: LiaPenAltSolid,
-    ColorPenOutlineIcon: TiPen,
-    PaintPenOutlineIcon: HiOutlinePaintBrush,
+    HandleIcon: Hand,
+    PencilOutlineIcon: Pen,
+    MemoryPenOutlineIcon: Highlighter,
+    ColorPenOutlineIcon: Brush,
+    PaintPenOutlineIcon: PaintBucket,
     PenOutlineIcon: LiaPenFancySolid,
-    FontsIcon: FaFont,
-    MinusIcon: LiaMinusSolid,
-    SquareIcon: FaRegSquare,
-    EraserIcon: LuEraser,
-    PlusIcon: LiaPlusSolid,
-    FontBoldIcon: FaBold,
-    FontItalicIcon: FaItalic,
-    FontUnderlineIcon: FaUnderline,
-    CircleOutlineIcon: FaRegCircle,
-    RectangleOutlineIcon: TbRectangle,
-    UndoIcon: LiaUndoSolid,
-    RedoIcon: LiaRedoSolid,
-    MenuIcon: IoMdMenu,
-    CheckIcon: FaCheck,
-    CopyImageIcon: FaRegImages,
-    SaveCloudIcon: FaCloudArrowDown,
-    ExportIcon: FaFileExport,
-    PDFIcon: FaRegFilePdf,
-    ImageIcon: FaRegImage,
-    NextIcon: MdOutlineKeyboardArrowRight,
-    MoreIcon: TfiMore,
-    MultipleCardsIcon: TbBoxMultiple1,
-    AddBoardIcon: MdOutlineAddToPhotos,
-    DivideIcon: RxDividerHorizontal,
-    CleanIcon: MdOutlineCleaningServices,
-    ImageUpIcon: LuImageUp
+    FontsIcon: Type,
+    MinusIcon: Minus,
+    SquareIcon: Square,
+    EraserIcon: Eraser,
+    PlusIcon: Plus,
+    FontBoldIcon: Bold,
+    FontItalicIcon: Italic,
+    FontUnderlineIcon: Underline,
+    CircleOutlineIcon: Circle,
+    RectangleOutlineIcon: Rectangle,
+    UndoIcon: CornerUpLeft,
+    RedoIcon: CornerUpRight,
+    MenuIcon: Menu,
+    CheckIcon: Check,
+    CopyImageIcon: Images,
+    SaveCloudIcon: CloudDownload,
+    ExportIcon: FolderInput,
+    PDFIcon: FileText,
+    ImageIcon: Image,
+    ArrowRightIcon: ChevronRight,
+    MoreIcon: Ellipsis,
+    MultipleCardsIcon: Layers, 
+    AddBoardIcon: FilePlus2, // Thêm bảng
+    SplineIcon: Spline, // Hình học
+    CleanIcon: BrushCleaning, // Chổi quét rác
+    ImageUpIcon: ImageUp, // Up ảnh
+    LineIcon: Slash, // Đường chéo
+    RectangleIcon: Rectangle, // Hình chữ nhật
+    CircleIcon: Circle, // Hình tròn
+    HeartIcon: Heart, // Trái tim
+    TriangleIcon: Triangle, // Hình tam giác
+    SquareDashedIcon: SquareDashedMousePointer, // Select Move
+    DeleteOutlineIcon: Trash, // Thùng rác (Xóa)
+    ArrowDownIcon: ChevronDown, 
+    PenLineIcon: PenLine, // Chỉnh sửa
+    ShredderIcon: Shredder, // Hủy giấy
+    PartyPopperIcon: PartyPopper, // Pháo hoa
 };

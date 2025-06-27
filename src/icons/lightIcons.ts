@@ -43,11 +43,11 @@ export const lightIcons = {
     ExportIcon: FaFileExport,
     PDFIcon: FaRegFilePdf,
     ImageIcon: FaRegImage,
-    NextIcon: MdOutlineKeyboardArrowRight,
+    ArrowRightIcon: MdOutlineKeyboardArrowRight,
     MoreIcon: TfiMore,
     MultipleCardsIcon: TbBoxMultiple1,
     AddBoardIcon: MdOutlineAddToPhotos,
-    DivideIcon: RxDividerHorizontal,
+    SplineIcon: RxDividerHorizontal,
     CleanIcon: MdOutlineCleaningServices,
     ImageUpIcon: LuImageUp
 };

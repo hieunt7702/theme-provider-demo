@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { Point } from './types/drawing';
+import { GEOMETRY_TYPE, Point, ToolType } from './types/drawing';
 import { TextEditor } from './TextEditor';
 import { BRUSH_TYPE, useDrawing } from '../contexts/DrawingContext';
 import { LaserPointer } from './LaserPointer';
@@ -8,6 +8,8 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
     const {
         currentPage,
         setCurrentPage,
+        currentGeometryType,
+        setCurrentGeometryType,
         currentAction,
         setCurrentAction,
         isDrawing,
@@ -61,7 +63,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             if (e.code === 'Space') {
                 e.preventDefault();
                 setIsSpacePressed(false);
-                if (containerRef.current && currentTool !== 'pan') {
+                if (containerRef.current && currentTool !== ToolType.PAN) {
                     containerRef.current.style.cursor = 'default';
                 }
             }
@@ -94,14 +96,14 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
 
         // Vẽ ảnh nền trên canvas chính
         currentPage?.commands?.forEach((command) => {
-            if (command.type === 'image' && command.image) {
+            if (command.type === ToolType.IMAGE && command.image) {
                 context.drawImage(command.image, 0, 0, canvas.width / zoomFactor, canvas.height / zoomFactor);
             }
         });
 
         // Vẽ các lệnh khác trên canvas tạm
         currentPage?.commands?.forEach((command) => {
-            if (command.type === 'image') return; // Bỏ qua ảnh
+            if (command.type === ToolType.IMAGE) return; // Bỏ qua ảnh
             tempContext.beginPath();
             tempContext.lineCap = 'round';
             tempContext.lineJoin = 'round';
@@ -130,33 +132,34 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                     tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
                     break;
             }
-            if (command.type === 'freehand' || command.type === 'erase') {
+            if (command.type === ToolType.FREE_HAND || command.type === ToolType.ERASER) {
                 tempContext.moveTo(command.points![0].x, command.points![0].y);
                 command.points!.forEach((point) => tempContext.lineTo(point.x, point.y));
-                tempContext.strokeStyle = command.type === 'erase' ? '#FFFFFF' : command.color;
-                tempContext.globalCompositeOperation = command.type === 'erase' ? 'destination-out' : 'source-over';
+                tempContext.strokeStyle = command.type === ToolType.ERASER ? '#FFFFFF' : command.color;
+                tempContext.globalCompositeOperation = command.type === ToolType.ERASER ? 'destination-out' : 'source-over';
                 tempContext.stroke();
-            } else if (command.type === 'line') {
-                tempContext.moveTo(command.fromX!, command.fromY!);
-                tempContext.lineTo(command.toX!, command.toY!);
-                tempContext.strokeStyle = command.color;
-                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
-            } else if (command.type === 'rectangle') {
-                tempContext.strokeRect(command.x!, command.y!, command.width!, command.height!);
-                tempContext.strokeStyle = command.color;
-                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
-            } else if (command.type === 'circle') {
-                tempContext.arc(command.x!, command.y!, command.radius!, 0, 2 * Math.PI);
-                tempContext.strokeStyle = command.color;
-                tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
-            }
-            else if (command.type === 'text') {
+            } else if (command.type === ToolType.GEOMETRY) {
+                if (command.geometryType === GEOMETRY_TYPE.LINE) {
+                    tempContext.moveTo(command.fromX!, command.fromY!);
+                    tempContext.lineTo(command.toX!, command.toY!);
+                    tempContext.strokeStyle = command.color;
+                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                } else if (command.geometryType === GEOMETRY_TYPE.RECTANGLE) {
+                    tempContext.strokeRect(command.x!, command.y!, command.width!, command.height!);
+                    tempContext.strokeStyle = command.color;
+                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                } else if (command.geometryType === GEOMETRY_TYPE.CIRCLE) {
+                    tempContext.arc(command.x!, command.y!, command.radius!, 0, 2 * Math.PI);
+                    tempContext.strokeStyle = command.color;
+                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                }
+            } else if (command.type === ToolType.TEXT) {
                 const style = command.textStyle || { fontFamily: 'Arial', fontSize: 16, bold: false, italic: false, underline: false };
 
                 // Thiết lập font và style cho text
@@ -235,28 +238,31 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                     break;
             }
 
-            if (currentAction.type === 'freehand' || currentAction.type === 'erase') {
+            if (currentAction.type === ToolType.FREE_HAND || currentAction.type === ToolType.ERASER) {
                 tempContext.moveTo(currentAction.points![0].x, currentAction.points![0].y);
                 currentAction.points!.forEach((point) => tempContext.lineTo(point.x, point.y));
-                tempContext.strokeStyle = currentAction.type === 'erase' ? '#FFFFFF' : currentAction.color;
-                tempContext.globalCompositeOperation = currentAction.type === 'erase' ? 'destination-out' : 'source-over';
+                tempContext.strokeStyle = currentAction.type === ToolType.ERASER ? '#FFFFFF' : currentAction.color;
+                tempContext.globalCompositeOperation = currentAction.type === ToolType.ERASER ? 'destination-out' : 'source-over';
                 tempContext.stroke();
-            } else if (currentAction.type === 'line') {
-                tempContext.moveTo(currentAction.fromX!, currentAction.fromY!);
-                tempContext.lineTo(currentAction.toX!, currentAction.toY!);
-                tempContext.strokeStyle = currentAction.color;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
-            } else if (currentAction.type === 'rectangle') {
-                tempContext.strokeRect(currentAction.x!, currentAction.y!, currentAction.width!, currentAction.height!);
-                tempContext.strokeStyle = currentAction.color;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
-            } else if (currentAction.type === 'circle') {
-                tempContext.arc(currentAction.x!, currentAction.y!, currentAction.radius!, 0, 2 * Math.PI);
-                tempContext.strokeStyle = currentAction.color;
-                tempContext.globalCompositeOperation = 'source-over';
-                tempContext.stroke();
+            } else if (currentAction.type === ToolType.GEOMETRY) {
+                if (currentGeometryType === GEOMETRY_TYPE.LINE) {
+                    tempContext.moveTo(currentAction.fromX!, currentAction.fromY!);
+                    tempContext.lineTo(currentAction.toX!, currentAction.toY!);
+                    tempContext.strokeStyle = currentAction.color;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                } else if (currentGeometryType === GEOMETRY_TYPE.RECTANGLE) {
+                    tempContext.strokeRect(currentAction.x!, currentAction.y!, currentAction.width!, currentAction.height!);
+                    tempContext.strokeStyle = currentAction.color;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                } else if (currentGeometryType === GEOMETRY_TYPE.CIRCLE) {
+                    tempContext.arc(currentAction.x!, currentAction.y!, currentAction.radius!, 0, 2 * Math.PI);
+                    tempContext.strokeStyle = currentAction.color;
+                    tempContext.globalCompositeOperation = 'source-over';
+                    tempContext.stroke();
+                }
+
             }
             tempContext.globalAlpha = 1;
         }            // Đặt lại trạng thái context trước khi vẽ lại
@@ -290,57 +296,76 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             return;
         }
 
-        if (currentTool === 'text' && (!textValue || !showTextInput)) {
+        if (currentTool === ToolType.TEXT && (!textValue || !showTextInput)) {
             // Chỉ set vị trí text khi bắt đầu vẽ text mới
             setTextPosition({ x, y });
             setShowTextInput(true);
             return;
         }
 
-        if (currentTool === 'pencil') {
+        if (currentTool === ToolType.PENCIL) {
             setCurrentAction({
-                type: 'freehand',
+                type: ToolType.FREE_HAND,
                 points: [{ x, y }],
                 color: currentColor,
                 size: currentBrushSize,
                 brushType: currentBrushType,
             });
-        } else if (currentTool === 'eraser') {
+        }
+        if (currentTool === ToolType.ERASER) {
             setCurrentAction({
-                type: 'erase',
+                type: ToolType.ERASER,
                 points: [{ x, y }],
                 color: currentColor,
                 size: currentBrushSize,
             });
-        } else if (currentTool === 'line') {
+        }
+        if (currentTool === ToolType.GEOMETRY) {
             setCurrentAction({
-                type: 'line',
+                type: ToolType.GEOMETRY,
+                geometryType: GEOMETRY_TYPE.LINE,
                 fromX: x,
                 fromY: y,
                 toX: x,
                 toY: y,
                 color: currentColor,
                 size: currentBrushSize,
-            });
-        } else if (currentTool === 'rectangle') {
-            setCurrentAction({
-                type: 'rectangle',
-                x,
-                y,
-                width: 0,
-                height: 0,
-                color: currentColor,
-                size: currentBrushSize,
-            });
-        } else if (currentTool === 'circle') {
-            setCurrentAction({
-                type: 'circle',
-                x,
-                y,
-                radius: 0,
-                color: currentColor,
-                size: currentBrushSize,
-            });
+            })
+            if (currentAction?.geometryType === GEOMETRY_TYPE.LINE) {
+                setCurrentAction({
+                    type: ToolType.GEOMETRY,
+                    geometryType: GEOMETRY_TYPE.LINE,
+                    fromX: x,
+                    fromY: y,
+                    toX: x,
+                    toY: y,
+                    color: currentColor,
+                    size: currentBrushSize,
+                })
+            }
+            if (currentAction?.geometryType === GEOMETRY_TYPE.SQUARE) {
+                setCurrentAction({
+                    type: ToolType.GEOMETRY,
+                    geometryType: GEOMETRY_TYPE.SQUARE,
+                    x,
+                    y,
+                    width: 0,
+                    height: 0,
+                    color: currentColor,
+                    size: currentBrushSize,
+                });
+            }
+            if (currentAction?.geometryType === GEOMETRY_TYPE.SQUARE) {
+                setCurrentAction({
+                    type: ToolType.GEOMETRY,
+                    geometryType: GEOMETRY_TYPE.CIRCLE,
+                    x,
+                    y,
+                    radius: 0,
+                    color: currentColor,
+                    size: currentBrushSize,
+                });
+            }
         }
     };
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -364,7 +389,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             return;
         }
 
-        if (isSpacePressed || currentTool === 'pan') {
+        if (isSpacePressed || currentTool === ToolType.PAN) {
             return;
         }
 
@@ -372,29 +397,38 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
 
         const { x, y } = getAdjustedCoordinates(e);
 
-        if (currentAction.type === 'freehand' || currentAction.type === 'erase') {
+        if (currentAction.type === ToolType.FREE_HAND || currentAction.type === ToolType.ERASER) {
             setCurrentAction(prev => ({
                 ...prev!,
                 points: [...(prev!.points as Point[]), { x, y }],
             }));
-        } else if (currentAction.type === 'line') {
-            setCurrentAction(prev => ({
-                ...prev!,
-                toX: x,
-                toY: y,
-            }));
-        } else if (currentAction.type === 'rectangle') {
-            setCurrentAction(prev => ({
-                ...prev!,
-                x: Math.min(prev!.x!, x),
-                y: Math.min(prev!.y!, y),
-                width: Math.abs(x - prev!.x!),
-                height: Math.abs(y - prev!.y!),
-            }));
-        } else if (currentAction.type === 'circle') {
-            const radius = Math.sqrt((x - currentAction.x!) ** 2 + (y - currentAction.y!) ** 2);
-            setCurrentAction(prev => ({ ...prev!, radius }));
         }
+        if (currentAction.type === ToolType.GEOMETRY) {
+            if (currentGeometryType === GEOMETRY_TYPE.LINE) {
+                setCurrentAction(prev => ({
+                    ...prev!,
+                    toX: x,
+                    toY: y,
+                }));
+            }
+
+            if (currentGeometryType === GEOMETRY_TYPE.SQUARE) {
+                setCurrentAction(prev => ({
+                    ...prev!,
+                    x: Math.min(prev!.x!, x),
+                    y: Math.min(prev!.y!, y),
+                    width: Math.abs(x - prev!.x!),
+                    height: Math.abs(y - prev!.y!),
+                }));
+            }
+
+            if (currentGeometryType === GEOMETRY_TYPE.CIRCLE) {
+                const radius = Math.sqrt((x - currentAction.x!) ** 2 + (y - currentAction.y!) ** 2);
+                setCurrentAction(prev => ({ ...prev!, radius }));
+            }
+        }
+
+        console.log("Move", x, y)
     };
 
     const handleMouseUp = () => {

@@ -3,6 +3,7 @@ import { useTheme } from "../contexts/theme-context";
 import { useDrawing } from "../contexts/DrawingContext";
 import ButtonIcon from "./ButtonIcon"
 import Dropdown from "./Dropdown"
+import { COLOR_DEFAULT, FONT_FAMILY_DEFAULT, FONT_SIZE_DEFAULT } from "../static/static";
 
 interface TextEditorDropdownButtonProps {
     isActive?: boolean;
@@ -15,11 +16,6 @@ interface ChipColorProps {
     checked?: boolean;
 }
 
-const fontFamilies = ['Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana'];
-const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
-const dataColorsDefault = [
-    "#000000", "#f0a3a3", "#f0c3a3", "#f0e3a3", "#a3f0a3", "#a3f0e3"
-];
 export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdownButtonProps) => {
     const { iconSet } = useTheme();
     const {
@@ -37,7 +33,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
                     <div className="flex flex-col gap-2">
                         <span className="text-sm font-medium">Color</span>
                         <div className="flex items-center gap-2 flex-wrap">
-                            {dataColorsDefault.map((color) => (
+                            {COLOR_DEFAULT.map((color) => (
                                 <ChipColor
                                     key={color}
                                     color={color}
@@ -67,7 +63,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
                                 placement="bottom"
                                 dropdown={({ onClose }) => (
                                     <div className="flex flex-col min-w-[200px] bg-white rounded shadow-custom-11 py-1.5">
-                                        {fontFamilies.map((font) => (
+                                        {FONT_FAMILY_DEFAULT.map((font) => (
                                             <span
                                                 onClick={() => {
                                                     onClose();
@@ -89,7 +85,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
                                 dropdown={({ onClose }) => (
                                     <div className="flex flex-col flex-none max-h-[200px] bg-white rounded shadow-custom-11 py-1.5">
                                         <div className="w-full h-full flex flex-col overflow-y-auto">
-                                            {fontSizes.map((font) => (
+                                            {FONT_SIZE_DEFAULT.map((font) => (
                                                 <span
                                                     onClick={() => {
                                                         onClose();
@@ -109,28 +105,25 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
                                 )}
                             </Dropdown>
                         </div>
-                        <div className="flex gap-1">
-                            <button
-                                className={`px-3 py-1 border rounded-sm hover:bg-gray-100 font-bold ${textStyle.bold ? 'bg-gray-200' : ''}`}
+                        <div className="flex gap-2">
+                            <ButtonIcon
+                                Icon={iconSet.FontBoldIcon}
+                                className="border border-gray-200"
                                 onClick={() => setTextStyle({ ...textStyle, bold: !textStyle.bold })}
-                                title="Bold"
-                            >
-                                B
-                            </button>
-                            <button
-                                className={`px-3 py-1 border rounded-sm hover:bg-gray-100 italic ${textStyle.italic ? 'bg-gray-200' : ''}`}
+                                isActive={textStyle.bold}
+                            />
+                            <ButtonIcon
+                                Icon={iconSet.FontItalicIcon}
+                                className="border border-gray-200"
                                 onClick={() => setTextStyle({ ...textStyle, italic: !textStyle.italic })}
-                                title="Italic"
-                            >
-                                I
-                            </button>
-                            <button
-                                className={`px-3 py-1 border rounded-sm hover:bg-gray-100 underline ${textStyle.underline ? 'bg-gray-200' : ''}`}
+                                isActive={textStyle.italic}
+                            />
+                            <ButtonIcon
+                                Icon={iconSet.FontUnderlineIcon}
+                                className="border border-gray-200"
                                 onClick={() => setTextStyle({ ...textStyle, underline: !textStyle.underline })}
-                                title="Underline"
-                            >
-                                U
-                            </button>
+                                isActive={textStyle.underline}
+                            />
                         </div>
                     </div>
                 </div>

@@ -4,9 +4,10 @@ import Dropdown from "./Dropdown"
 import { InputRange } from "./InputRange";
 import { BRUSH_TYPE, useDrawing } from "../contexts/DrawingContext";
 import ButtonIcon from "./ButtonIcon";
+import { GEOMETRY_TYPE } from "./types/drawing";
 import { COLOR_DEFAULT } from "../static/static";
 
-export interface PenDropdownButtonProps {
+export interface GeometryDropdownButtonProps {
     isActive?: boolean;
     onColorChange?: (color: string) => void;
     onBrushSizeChange: (size: number) => void;
@@ -14,23 +15,19 @@ export interface PenDropdownButtonProps {
     currentColor?: string;
 }
 
-export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, onClick, currentColor }: PenDropdownButtonProps) => {
+export const GeometryDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, onClick, currentColor }: GeometryDropdownButtonProps) => {
     const { iconSet, config } = useTheme();
-    const { PencilOutlineIcon,
-        MemoryPenOutlineIcon,
-        ColorPenOutlineIcon,
-        PaintPenOutlineIcon,
-        PenOutlineIcon, } = iconSet;
 
-    const dataPenTypes = [
-        { type: BRUSH_TYPE.PENCIL, name: "Bút chì", icon: PencilOutlineIcon },
-        { type: BRUSH_TYPE.MEMORY_PEN, name: "Bút nhớ", icon: MemoryPenOutlineIcon },
-        { type: BRUSH_TYPE.COLOR_PEN, name: "Bút màu", icon: ColorPenOutlineIcon },
-        { type: BRUSH_TYPE.PAINT_PEN, name: "Bút sơn", icon: PaintPenOutlineIcon },
-        { type: BRUSH_TYPE.PEN, name: "Bút bi", icon: PenOutlineIcon }
+    const dataGeometryType = [
+        { type: GEOMETRY_TYPE.LINE, name: "Đường thẳng", icon: iconSet.LineIcon },
+        { type: GEOMETRY_TYPE.SQUARE, name: "Hình vuông", icon: iconSet.SquareIcon },
+        { type: GEOMETRY_TYPE.TRINGTANGLE, name: "Hình tam giác", icon: iconSet.TriangleIcon },
+        { type: GEOMETRY_TYPE.CIRCLE, name: "Hình tròn", icon: iconSet.CircleIcon },
+        { type: GEOMETRY_TYPE.HEART, name: "Trái tim", icon: iconSet.HeartIcon }
     ]
 
-    const { currentBrushSize, currentBrushType, setCurrentBrushType } = useDrawing();
+
+    const { currentBrushSize, setCurrentGeometryType, currentGeometryType } = useDrawing();
     return (
         <Dropdown
             placement="right"
@@ -59,14 +56,14 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <span>Loại bút</span>
+                        <span>Loại hình</span>
                         <div className="flex items-center gap-2">
-                            {dataPenTypes.map((pen) => (
+                            {dataGeometryType.map((geo) => (
                                 <ButtonIcon
-                                    key={pen.name}
-                                    Icon={pen.icon}
-                                    onClick={() => setCurrentBrushType(pen.type)}
-                                    isActive={currentBrushType === pen.type}
+                                    key={geo.name}
+                                    Icon={geo.icon || iconSet.PencilOutlineIcon}
+                                    onClick={() => setCurrentGeometryType(geo.type)}
+                                    isActive={currentGeometryType === geo.type}
                                 />
                             ))}
                         </div>
@@ -82,7 +79,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
             {({ isOpen }) => (
                 <ButtonIcon
                     onClick={onClick}
-                    Icon={iconSet.PencilOutlineIcon}
+                    Icon={iconSet.SplineIcon}
                     isActive={isOpen || isActive}
                 />
             )}

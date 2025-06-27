@@ -12,6 +12,7 @@ module.exports = {
         comic: ['ComicFont', 'cursive'],
         cherry: ['cherry'],
         vtv323: ['vt323'],
+        work_sans: ['work_sans'],
       },
       boxShadow: {
         'custom-11': '0px 4px 14px 0px rgba(0, 0, 0, 0.11)',

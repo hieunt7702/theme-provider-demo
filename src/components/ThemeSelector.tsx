@@ -3,7 +3,7 @@ import Dropdown from "./Dropdown";
 
 export const ThemeSelector = () => {
     const { theme, setTheme, config, iconSet } = useTheme();
-    const { NextIcon } = iconSet
+    const { ArrowRightIcon } = iconSet
     const dataTheme = [
         {
             value: "default",
@@ -44,11 +44,11 @@ export const ThemeSelector = () => {
             placement="bottom"
         >
             {({ isOpen }) => (
-                <div className={`w-full h-8 flex-none ${config?.components?.buttonIcon} ${isOpen ? "!bg-pink-200" : ""} px-3 py-1 rounded cursor-pointer flex items-center justify-between gap-3`}>
+                <div className={`w-full h-8 flex-none ${config?.components?.buttonIcon} ${isOpen ? config?.components?.buttonSelected : ""} px-3 py-1 rounded cursor-pointer flex items-center justify-between gap-3`}>
                     <div className="flex items-center gap-3">
                         <span className="flex-none">{theme}</span>
                     </div>
-                    <NextIcon className={`w-5 h-5 flex-none`} />
+                    <ArrowRightIcon className={`w-5 h-5 flex-none`} />
                 </div>)}
 
         </Dropdown>

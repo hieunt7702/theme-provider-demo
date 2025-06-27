@@ -520,11 +520,11 @@ const Gu = {
   ExportIcon: Mo,
   PDFIcon: zo,
   ImageIcon: Uo,
-  NextIcon: os,
+  ArrowRightIcon: os,
   MoreIcon: cs,
   MultipleCardsIcon: rs,
   AddBoardIcon: ss,
-  DivideIcon: Yo,
+  SplineIcon: Yo,
   CleanIcon: ls,
   ImageUpIcon: ns
 }, Yu = {
@@ -556,11 +556,11 @@ const Gu = {
   ExportIcon: Mo,
   PDFIcon: zo,
   ImageIcon: Uo,
-  NextIcon: os,
+  ArrowRightIcon: os,
   MoreIcon: cs,
   MultipleCardsIcon: rs,
   AddBoardIcon: ss,
-  DivideIcon: Yo,
+  SplineIcon: Yo,
   CleanIcon: ls,
   ImageUpIcon: ns
 }, Ju = {
@@ -592,11 +592,11 @@ const Gu = {
   ExportIcon: Mo,
   PDFIcon: zo,
   ImageIcon: Uo,
-  NextIcon: os,
+  ArrowRightIcon: os,
   MoreIcon: cs,
   MultipleCardsIcon: rs,
   AddBoardIcon: ss,
-  DivideIcon: Yo,
+  SplineIcon: Yo,
   CleanIcon: ls,
   ImageUpIcon: ns
 }, Xu = {
@@ -628,11 +628,11 @@ const Gu = {
   ExportIcon: Mo,
   PDFIcon: zo,
   ImageIcon: Uo,
-  NextIcon: os,
+  ArrowRightIcon: os,
   MoreIcon: cs,
   MultipleCardsIcon: rs,
   AddBoardIcon: ss,
-  DivideIcon: Yo,
+  SplineIcon: Yo,
   CleanIcon: ls,
   ImageUpIcon: ns
 }, rl = {
@@ -9067,7 +9067,7 @@ const Kc = Sc(void 0), c2 = ({ children: n }) => {
     ExportIcon: o,
     PDFIcon: c,
     ImageIcon: h,
-    NextIcon: f
+    ArrowRightIcon: f
   } = n, { copyAsImage: g, saveAsPDF: b, saveAsPNG: y } = Ur(), N = () => {
     b();
   }, p = () => {
@@ -9442,7 +9442,7 @@ const Kc = Sc(void 0), c2 = ({ children: n }) => {
   );
 }, n2 = () => {
   const { iconSet: n, config: t } = zr(), {
-    NextIcon: r,
+    ArrowRightIcon: r,
     MoreIcon: a,
     MultipleCardsIcon: s,
     AddBoardIcon: o
@@ -9551,7 +9551,7 @@ const Kc = Sc(void 0), c2 = ({ children: n }) => {
     SquareIcon: he,
     UndoIcon: Le,
     RedoIcon: ie,
-    DivideIcon: H,
+    SplineIcon: H,
     CleanIcon: ae,
     ImageUpIcon: de
   } = I;

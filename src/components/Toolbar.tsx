@@ -196,6 +196,11 @@ export const Toolbar = (props: ToolbarProps) => {
                         />
                         <ButtonIcon
                             Icon={SquareDashedIcon}
+                            onClick={() => {
+                                console.log('Switching to SELECT tool');
+                                setCurrentTool(ToolType.SELECT);
+                            }}
+                            isActive={currentTool === ToolType.SELECT}
                             title="Chọn vùng"
                         />
                         <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>

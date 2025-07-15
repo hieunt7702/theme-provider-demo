@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { GEOMETRY_TYPE, Point, ToolType } from '../types/drawing';
+import { GEOMETRY_TYPE, Point, ToolType, DrawingCommand } from '../types/drawing';
 import { TextEditor } from './TextEditor';
 import { BRUSH_TYPE, useDrawing } from '../contexts/DrawingContext';
 import { LaserPointer } from './LaserPointer';
@@ -10,7 +10,6 @@ import {
     Area,
     TableConfig
 } from '../types/toolbar-actions';
-
 interface Canvas2Props extends ToolbarCallbacks { }
 
 export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) => {
@@ -42,13 +41,20 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const tempCanvasRef = useRef<HTMLCanvasElement>(null);
+    const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPanning, setIsPanning] = useState(false);
     const [isSpacePressed, setIsSpacePressed] = useState(false);
+    const [fabricObjects, setFabricObjects] = useState<fabric.Object[]>([]);
     const [panStart, setPanStart] = useState<Point | null>(null);
     const [canvasOffset, setCanvasOffset] = useState<Point>({ x: 0, y: 0 });
     const zoomFactor = zoomLevel / 100;
     const [random, setRandom] = useState(Math.random());
+    const [selectedPoint, setSelectedPoint] = useState<{ x: number, y: number, command: DrawingCommand } | null>(null);
+    const [hoveredCommand, setHoveredCommand] = useState<DrawingCommand | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStartPosition, setDragStartPosition] = useState<Point | null>(null);
+
 
     // Helper functions for drawing shapes
     const drawHeart = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
@@ -510,9 +516,55 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
 
         // Sao chép nội dung từ canvas tạm sang canvas chính với tỷ lệ đúng
         context.drawImage(tempCanvas, 0, 0, (tempCanvas.width ?? 0), (tempCanvas.height ?? 0));
-        // context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
 
-    }, [currentPage, currentAction, zoomLevel, random]);
+        // Vẽ khung cho command đang hover hoặc được chọn
+        const commandToHighlight = selectedPoint?.command || hoveredCommand;
+        if (commandToHighlight) {
+            let bounds = { x: 0, y: 0, width: 0, height: 0 };
+
+            // Tính toán bounds dựa vào loại command
+            if (commandToHighlight.points?.length) {
+                // Với nét vẽ tay/tẩy: tính min/max của tất cả các điểm
+                const xPoints = commandToHighlight.points.map((p: Point) => p.x);
+                const yPoints = commandToHighlight.points.map((p: Point) => p.y);
+                const minX = Math.min(...xPoints);
+                const maxX = Math.max(...xPoints);
+                const minY = Math.min(...yPoints);
+                const maxY = Math.max(...yPoints);
+                bounds = {
+                    x: minX,
+                    y: minY,
+                    width: maxX - minX,
+                    height: maxY - minY
+                };
+            } else if (commandToHighlight.type === ToolType.GEOMETRY) {
+                // Với hình học: lấy thông tin trực tiếp
+                bounds = {
+                    x: commandToHighlight.x || 0,
+                    y: commandToHighlight.y || 0,
+                    width: commandToHighlight.width || 0,
+                    height: commandToHighlight.height || 0
+                };
+            }
+
+            const padding = commandToHighlight.size || 10; // Padding dựa vào kích thước nét vẽ
+            context.save();
+            context.strokeStyle = '#FF0000';
+            context.lineWidth = 1;
+            context.setLineDash([5, 3]);
+
+            // Vẽ hình chữ nhật bao quanh toàn bộ command
+            context.strokeRect(
+                bounds.x - padding,
+                bounds.y - padding,
+                bounds.width + padding * 2,
+                bounds.height + padding * 2
+            );
+
+            context.restore();
+        }
+
+    }, [currentPage, currentAction, zoomLevel, random, selectedPoint, hoveredCommand]);
     const getAdjustedCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = (e.clientX - rect.left) / zoomFactor;
@@ -520,11 +572,52 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
         return { x, y };
     };
 
+    const checkPointInPath = (x: number, y: number, command: DrawingCommand) => {
+        const threshold = command.size || 5; // Dùng kích thước của nét vẽ làm ngưỡng
+
+        if (command.points?.length) {
+            // Với nét vẽ tay/tẩy: tính toán bounds
+            const xPoints = command.points.map(p => p.x);
+            const yPoints = command.points.map(p => p.y);
+            const minX = Math.min(...xPoints) - threshold;
+            const maxX = Math.max(...xPoints) + threshold;
+            const minY = Math.min(...yPoints) - threshold;
+            const maxY = Math.max(...yPoints) + threshold;
+
+            // Kiểm tra điểm có nằm trong bounds không
+            return x >= minX && x <= maxX && y >= minY && y <= maxY;
+        } else if (command.type === ToolType.GEOMETRY) {
+            // Với hình học: kiểm tra bounds + độ dày nét vẽ
+            const cx = command.x || 0;
+            const cy = command.y || 0;
+            const width = command.width || 0;
+            const height = command.height || 0;
+
+            return x >= cx - threshold && x <= cx + width + threshold &&
+                y >= cy - threshold && y <= cy + height + threshold;
+        }
+        return false;
+    };
+
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        setClicking(true);
-        setIsDrawing(true);
         const { x, y } = getAdjustedCoordinates(e);
         const rect = e.currentTarget.getBoundingClientRect();
+
+        if (currentTool === ToolType.SELECT) {
+            // Tìm command gần nhất với điểm click
+            const clickedCommand = currentPage?.commands?.find(cmd => checkPointInPath(x, y, cmd));
+            if (clickedCommand) {
+                setSelectedPoint({ x, y, command: clickedCommand });
+                setIsDragging(true);
+                setDragStartPosition({ x, y });
+            } else {
+                setSelectedPoint(null);
+            }
+            return;
+        }
+
+        setClicking(true);
+        setIsDrawing(true);
 
         // Call onDrawingStart callback
         if (props.onDrawingStart && currentTool !== 'pan' && !isSpacePressed) {
@@ -616,14 +709,64 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
                     break;
             }
         }
+
+
     };
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
         // Luôn cập nhật vị trí chuột
         const rect = canvasRef.current!.getBoundingClientRect();
-        // const { x: mouseX, y: mouseY } = getAdjustedCoordinates(e);
-        // Lấy vị trí chuột tương đối so với canvas container
+        const { x, y } = getAdjustedCoordinates(e);
         const mouseX = (e.clientX - rect.left);
         const mouseY = (e.clientY - rect.top);
+
+        // Xử lý kéo command đã chọn
+        if (isDragging && selectedPoint && dragStartPosition) {
+            const dx = x - dragStartPosition.x;
+            const dy = y - dragStartPosition.y;
+
+            const updatedCommand = { ...selectedPoint.command };
+
+            if (updatedCommand.points?.length) {
+                // Di chuyển tất cả các điểm nếu là nét vẽ tay/tẩy
+                updatedCommand.points = updatedCommand.points.map(point => ({
+                    x: point.x + dx,
+                    y: point.y + dy
+                }));
+            } else if (updatedCommand.type === ToolType.GEOMETRY) {
+                // Di chuyển các tọa độ nếu là hình học
+                if (updatedCommand.x !== undefined) updatedCommand.x += dx;
+                if (updatedCommand.y !== undefined) updatedCommand.y += dy;
+                if (updatedCommand.fromX !== undefined) updatedCommand.fromX += dx;
+                if (updatedCommand.fromY !== undefined) updatedCommand.fromY += dy;
+                if (updatedCommand.toX !== undefined) updatedCommand.toX += dx;
+                if (updatedCommand.toY !== undefined) updatedCommand.toY += dy;
+            }
+
+            // Cập nhật command trong danh sách
+            setCurrentPage(prev => ({
+                ...prev,
+                commands: prev.commands.map(cmd =>
+                    cmd === selectedPoint.command ? updatedCommand : cmd
+                )
+            }));
+
+            // Cập nhật selectedPoint và dragStartPosition
+            setSelectedPoint({
+                x: x,
+                y: y,
+                command: updatedCommand
+            });
+            setDragStartPosition({ x, y });
+            return;
+        }
+
+        // Kiểm tra hover khi đang ở chế độ SELECT
+        if (currentTool === ToolType.SELECT) {
+            const hoveredCmd = currentPage?.commands?.find(cmd => checkPointInPath(x, y, cmd));
+            setHoveredCommand(hoveredCmd || null);
+        } else {
+            setHoveredCommand(null);
+        }
 
         // Cập nhật vị trí chuột thực trên màn hình
         setMousePosition({
@@ -644,27 +787,29 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
 
         if (!isDrawing || !currentAction) return;
 
-        const { x, y } = getAdjustedCoordinates(e);
+        const adjustedCoords = getAdjustedCoordinates(e);
+        const drawX = adjustedCoords.x;
+        const drawY = adjustedCoords.y;
 
         if (currentAction.type === ToolType.FREE_HAND || currentAction.type === ToolType.ERASER) {
             setCurrentAction(prev => ({
                 ...prev!,
-                points: [...(prev!.points as Point[]), { x, y }],
+                points: [...(prev!.points as Point[]), { x: drawX, y: drawY }],
             }));
         } if (currentAction.type === ToolType.GEOMETRY) {
             switch (currentGeometryType) {
                 case GEOMETRY_TYPE.LINE:
                     setCurrentAction(prev => ({
                         ...prev!,
-                        toX: x,
-                        toY: y,
+                        toX: drawX,
+                        toY: drawY,
                     }));
                     break;
 
                 case GEOMETRY_TYPE.SQUARE:
                     const size = Math.max(
-                        Math.abs(x - currentAction.x!),
-                        Math.abs(y - currentAction.y!)
+                        Math.abs(drawX - currentAction.x!),
+                        Math.abs(drawY - currentAction.y!)
                     );
                     setCurrentAction(prev => ({
                         ...prev!,
@@ -678,15 +823,15 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
                 case GEOMETRY_TYPE.TRINGTANGLE:
                     setCurrentAction(prev => ({
                         ...prev!,
-                        width: x - prev!.x!,
-                        height: y - prev!.y!,
+                        width: drawX - prev!.x!,
+                        height: drawY - prev!.y!,
                     }));
                     break;
 
                 case GEOMETRY_TYPE.CIRCLE:
                     const radius = Math.sqrt(
-                        Math.pow(x - currentAction.x!, 2) +
-                        Math.pow(y - currentAction.y!, 2)
+                        Math.pow(drawX - currentAction.x!, 2) +
+                        Math.pow(drawY - currentAction.y!, 2)
                     );
                     setCurrentAction(prev => ({
                         ...prev!,
@@ -699,7 +844,10 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
     };
 
     const handleMouseUp = () => {
-        setClicking(false)
+        setClicking(false);
+        setIsDragging(false);
+        setDragStartPosition(null);
+
         if (isPanning) {
             setIsPanning(false);
             if (containerRef.current) {
@@ -714,6 +862,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
                 ...prev,
                 commands: [...prev.commands, currentAction],
             }));
+
 
             // Call onDrawingComplete callback
             if (props.onDrawingComplete && mousePosition) {
@@ -786,6 +935,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
                     ref={tempCanvasRef}
                     className="absolute top-0 left-0 w-full h-full pointer-events-none"
                 />
+                
                 {showTextInput && textPosition && (
                     <TextEditor position={{ x: textPosition.x, y: textPosition.y }} />
                 )}

@@ -4,7 +4,7 @@ import { defaultIcons } from "../icons/defaultIcons";
 import { lightIcons } from "../icons/lightIcons";
 import { darkIcons } from "../icons/darkIcons";
 import { childrenIcons } from "../icons/childrenIcons";
-import { IconSet } from "../components/types/drawing";
+import { IconSet } from "../types/drawing";
 
 export type ThemeType = "default" | "dark" | "light" | "children";
 

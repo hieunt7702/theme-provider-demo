@@ -1,4 +1,4 @@
-import { BRUSH_TYPE } from "../../contexts/DrawingContext";
+import { BRUSH_TYPE } from "../contexts/DrawingContext";
 
 export interface Point {
     x: number;
@@ -20,7 +20,9 @@ export interface DrawingCommand {
     height?: number;
     radius?: number;
     color: string;
-    size: number; text?: string;
+    size: number;
+    opacity?: number;
+    text?: string;
     textStyle?: {
         fontFamily: string;
         fontSize: number;
@@ -29,6 +31,9 @@ export interface DrawingCommand {
         underline: boolean;
     };
     image?: HTMLImageElement;
+    rotation?: number;
+    flipX?: boolean;
+    flipY?: boolean;
     isSelected?: boolean;
     selectionArea?: {
         x: number;

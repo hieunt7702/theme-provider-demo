@@ -1,15 +1,23 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { GEOMETRY_TYPE, Point, ToolType } from './types/drawing';
+import { GEOMETRY_TYPE, Point, ToolType } from '../types/drawing';
 import { TextEditor } from './TextEditor';
 import { BRUSH_TYPE, useDrawing } from '../contexts/DrawingContext';
 import { LaserPointer } from './LaserPointer';
+import {
+    DrawingResult,
+    DrawingState,
+    ToolbarCallbacks,
+    Area,
+    TableConfig
+} from '../types/toolbar-actions';
 
-export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
+interface Canvas2Props extends ToolbarCallbacks { }
+
+export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) => {
     const {
         currentPage,
         setCurrentPage,
         currentGeometryType,
-        setCurrentGeometryType,
         currentAction,
         setCurrentAction,
         isDrawing,
@@ -23,13 +31,13 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         showTextInput,
         textPosition,
         zoomLevel,
+        setZoomLevel,
         textValue,
-        textStyle,
-        setTextStyle,
         mousePosition,
         setMousePosition,
         isClicking,
         setClicking,
+        currentBrushOpacity
     } = useDrawing();
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -42,15 +50,122 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
     const zoomFactor = zoomLevel / 100;
     const [random, setRandom] = useState(Math.random());
 
+    // Helper functions for drawing shapes
+    const drawHeart = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+        const actualWidth = Math.abs(width);
+        const actualHeight = Math.abs(height);
+
+        // Scale the heart shape
+        const scale = Math.min(actualWidth, actualHeight) / 30;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 10);
+
+        // Left curve
+        ctx.bezierCurveTo(-10, 0, -20, 10, 0, 30);
+
+        // Right curve
+        ctx.bezierCurveTo(20, 10, 10, 0, 0, 10);
+
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+    };
+
+    const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+        const actualWidth = Math.abs(width);
+        const actualHeight = Math.abs(height);
+
+        ctx.beginPath();
+        if (width >= 0) {
+            // Vẽ từ trái sang phải
+            ctx.moveTo(x, y);  // Đỉnh trái
+            ctx.lineTo(x + actualWidth, y + actualHeight);  // Góc phải dưới
+            ctx.lineTo(x - actualWidth, y + actualHeight);  // Góc trái dưới
+        } else {
+            // Vẽ từ phải sang trái
+            ctx.moveTo(x, y);  // Đỉnh phải
+            ctx.lineTo(x + actualWidth, y + actualHeight);  // Góc phải dưới
+            ctx.lineTo(x + actualWidth * 2, y);  // Góc phải trên
+        }
+        ctx.closePath();
+        ctx.stroke();
+    };
+
+    const drawSquare = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+        ctx.strokeRect(x, y, size, size);
+    };
+
+
+    // Upload handler
+
     useEffect(() => {
         if (ref && typeof ref === 'object' && 'current' in ref) {
             (ref as React.MutableRefObject<HTMLCanvasElement | null>).current = canvasRef.current;
         }
     }, [ref]);
 
+    // Handle Canvas Actions
+    const handleClean = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        props.onClean?.();
+    };
+
+    const handleErase = (area: Area) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas) return;
+
+        ctx.clearRect(area.x, area.y, area.width, area.height);
+        props.onErase?.(area);
+    };
+
+    const handleZoom = (type: 'in' | 'out') => {
+        if (type === 'in') {
+            setZoomLevel(prev => Math.min(prev + 0.1, 3));
+            props.onZoomIn?.();
+        } else {
+            setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+            props.onZoomOut?.();
+        }
+    };
+
+    const handleAddTable = (config: TableConfig) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas) return;
+
+        const { rows, columns, position, cellWidth = 80, cellHeight = 40, style } = config;
+        const { borderColor = '#000000', borderWidth = 1, backgroundColor = '#ffffff' } = style || {};
+
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = borderWidth;
+        ctx.fillStyle = backgroundColor;
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                const x = position.x + j * cellWidth;
+                const y = position.y + i * cellHeight;
+
+                ctx.fillRect(x, y, cellWidth, cellHeight);
+                ctx.strokeRect(x, y, cellWidth, cellHeight);
+            }
+        }
+
+        props.onAddTable?.(config);
+    };
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === 'Space' && !e.repeat && !isSpacePressed) {
+            if (e.code === 'Space' && !e.repeat && !isSpacePressed && currentTool !== ToolType.TEXT) {
                 e.preventDefault();
                 setIsSpacePressed(true);
                 if (containerRef.current) {
@@ -84,6 +199,8 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         const context = canvas.getContext('2d')!;
         const tempContext = tempCanvas.getContext('2d')!;
 
+
+
         // Xóa cả hai canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);            // Lưu trạng thái và áp dụng zoom cho canvas chính
@@ -97,9 +214,36 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         // Vẽ ảnh nền trên canvas chính
         currentPage?.commands?.forEach((command) => {
             if (command.type === ToolType.IMAGE && command.image) {
-                context.drawImage(command.image, 0, 0, canvas.width / zoomFactor, canvas.height / zoomFactor);
+                const image = command.image;
+                const imgWidth = command.width ?? image.width;
+                const imgHeight = command.height ?? image.height;
+
+                // Kích thước canvas (đã set width/height tương ứng với clientWidth/clientHeight × DPR)
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+
+                // Khởi tạo kích thước vẽ = kích thước gốc
+                let drawWidth = imgWidth;
+                let drawHeight = imgHeight;
+
+                // Nếu ảnh lớn hơn canvas thì scale xuống vừa khít
+                if (imgWidth > canvasWidth || imgHeight > canvasHeight) {
+                    const scale = Math.min(
+                        canvasWidth / imgWidth,
+                        canvasHeight / imgHeight
+                    ) / zoomFactor;
+                    drawWidth = imgWidth * scale;
+                    drawHeight = imgHeight * scale;
+                }
+
+                // Tọa độ canh giữa
+                const drawX = (canvasWidth - drawWidth) / 2;
+                const drawY = (canvasHeight - drawHeight) / 2;
+
+                context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
             }
         });
+
 
         // Vẽ các lệnh khác trên canvas tạm
         currentPage?.commands?.forEach((command) => {
@@ -111,24 +255,24 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
             // Áp dụng hiệu ứng theo loại bút
             switch (command.brushType) {
                 case BRUSH_TYPE.PAINT_PEN:
-                    tempContext.globalAlpha = 0.5;
+                    tempContext.globalAlpha = command.opacity || 1;
                     tempContext.lineWidth = (command.size * 2) / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.MEMORY_PEN:
                 case BRUSH_TYPE.COLOR_PEN:
-                    tempContext.globalAlpha = 0.7;
+                    tempContext.globalAlpha = command.opacity || 1;
                     tempContext.lineWidth = command.size / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.PENCIL:
-                    tempContext.globalAlpha = 0.6;
+                    tempContext.globalAlpha = command.opacity || 1;
                     tempContext.lineWidth = (command.size * 0.8) / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.PEN:
                 default:
-                    tempContext.globalAlpha = 1;
+                    tempContext.globalAlpha = command.opacity || 1;
                     tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
                     break;
             }
@@ -137,27 +281,71 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                 command.points!.forEach((point) => tempContext.lineTo(point.x, point.y));
                 tempContext.strokeStyle = command.type === ToolType.ERASER ? '#FFFFFF' : command.color;
                 tempContext.globalCompositeOperation = command.type === ToolType.ERASER ? 'destination-out' : 'source-over';
+                tempContext.globalAlpha = command.type === ToolType.ERASER ? 1 : command.opacity || 1;
                 tempContext.stroke();
             } else if (command.type === ToolType.GEOMETRY) {
-                if (command.geometryType === GEOMETRY_TYPE.LINE) {
-                    tempContext.moveTo(command.fromX!, command.fromY!);
-                    tempContext.lineTo(command.toX!, command.toY!);
-                    tempContext.strokeStyle = command.color;
-                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
-                } else if (command.geometryType === GEOMETRY_TYPE.RECTANGLE) {
-                    tempContext.strokeRect(command.x!, command.y!, command.width!, command.height!);
-                    tempContext.strokeStyle = command.color;
-                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
-                } else if (command.geometryType === GEOMETRY_TYPE.CIRCLE) {
-                    tempContext.arc(command.x!, command.y!, command.radius!, 0, 2 * Math.PI);
-                    tempContext.strokeStyle = command.color;
-                    tempContext.lineWidth = (command.size * 0.5) / zoomFactor;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
+                tempContext.strokeStyle = command.color || '#000000';
+                tempContext.lineWidth = command.geometryType === GEOMETRY_TYPE.HEART ?
+                    (command.size * 0.25) / zoomFactor :
+                    (command.size * 0.5) / zoomFactor;
+                tempContext.globalCompositeOperation = 'source-over';
+
+                switch (command.geometryType) {
+                    case GEOMETRY_TYPE.LINE:
+                        tempContext.beginPath();
+                        tempContext.moveTo(command.fromX!, command.fromY!);
+                        tempContext.lineTo(command.toX!, command.toY!);
+                        tempContext.stroke();
+                        break;
+
+                    case GEOMETRY_TYPE.SQUARE:
+                        const squareSize = Math.max(
+                            Math.abs(command.width!),
+                            Math.abs(command.height!)
+                        );
+                        drawSquare(tempContext, command.x!, command.y!, squareSize);
+                        break;
+
+                    case GEOMETRY_TYPE.RECTANGLE:
+                        tempContext.strokeRect(
+                            command.x!,
+                            command.y!,
+                            command.width!,
+                            command.height!
+                        );
+                        break;
+
+                    case GEOMETRY_TYPE.CIRCLE:
+                        tempContext.beginPath();
+                        tempContext.arc(
+                            command.x!,
+                            command.y!,
+                            command.radius!,
+                            0,
+                            2 * Math.PI
+                        );
+                        tempContext.stroke();
+                        break;
+
+                    case GEOMETRY_TYPE.HEART:
+                        drawHeart(
+                            tempContext,
+                            command.x!,
+                            command.y!,
+                            Math.abs(command.width!),
+                            Math.abs(command.height!)
+                        );
+                        break;
+
+                    case GEOMETRY_TYPE.TRINGTANGLE:
+                        drawTriangle(
+                            tempContext,
+                            command.x!,
+                            command.y!,
+                            command.width!,
+                            command.height!
+                        );
+                        break;
                 }
             } else if (command.type === ToolType.TEXT) {
                 const style = command.textStyle || { fontFamily: 'Arial', fontSize: 16, bold: false, italic: false, underline: false };
@@ -216,24 +404,24 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
 
             switch (currentAction.brushType) {
                 case BRUSH_TYPE.PAINT_PEN:
-                    tempContext.globalAlpha = 0.5;
+                    tempContext.globalAlpha = currentBrushOpacity
                     tempContext.lineWidth = (currentAction.size * 2) / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.MEMORY_PEN:
                 case BRUSH_TYPE.COLOR_PEN:
-                    tempContext.globalAlpha = 0.7;
+                    tempContext.globalAlpha = currentBrushOpacity;
                     tempContext.lineWidth = currentAction.size / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.PENCIL:
-                    tempContext.globalAlpha = 0.6;
+                    tempContext.globalAlpha = currentBrushOpacity;
                     tempContext.lineWidth = (currentAction.size * 0.8) / zoomFactor;
                     break;
 
                 case BRUSH_TYPE.PEN:
                 default:
-                    tempContext.globalAlpha = 1;
+                    tempContext.globalAlpha = currentBrushOpacity;
                     tempContext.lineWidth = (currentAction.size * 0.5) / zoomFactor;
                     break;
             }
@@ -243,26 +431,77 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                 currentAction.points!.forEach((point) => tempContext.lineTo(point.x, point.y));
                 tempContext.strokeStyle = currentAction.type === ToolType.ERASER ? '#FFFFFF' : currentAction.color;
                 tempContext.globalCompositeOperation = currentAction.type === ToolType.ERASER ? 'destination-out' : 'source-over';
+                tempContext.globalAlpha = currentAction.type === ToolType.ERASER ? 1 : currentBrushOpacity || 1;
                 tempContext.stroke();
             } else if (currentAction.type === ToolType.GEOMETRY) {
-                if (currentGeometryType === GEOMETRY_TYPE.LINE) {
-                    tempContext.moveTo(currentAction.fromX!, currentAction.fromY!);
-                    tempContext.lineTo(currentAction.toX!, currentAction.toY!);
-                    tempContext.strokeStyle = currentAction.color;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
-                } else if (currentGeometryType === GEOMETRY_TYPE.RECTANGLE) {
-                    tempContext.strokeRect(currentAction.x!, currentAction.y!, currentAction.width!, currentAction.height!);
-                    tempContext.strokeStyle = currentAction.color;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
-                } else if (currentGeometryType === GEOMETRY_TYPE.CIRCLE) {
-                    tempContext.arc(currentAction.x!, currentAction.y!, currentAction.radius!, 0, 2 * Math.PI);
-                    tempContext.strokeStyle = currentAction.color;
-                    tempContext.globalCompositeOperation = 'source-over';
-                    tempContext.stroke();
-                }
+                tempContext.strokeStyle = currentAction.color || '#000000';
+                tempContext.lineWidth = currentAction.geometryType === GEOMETRY_TYPE.HEART ?
+                    (currentAction.size * 0.25) / zoomFactor :
+                    (currentAction.size * 0.5) / zoomFactor;
+                tempContext.globalCompositeOperation = 'source-over';
 
+                switch (currentGeometryType) {
+                    case GEOMETRY_TYPE.LINE:
+                        tempContext.beginPath();
+                        tempContext.moveTo(currentAction.fromX!, currentAction.fromY!);
+                        tempContext.lineTo(currentAction.toX!, currentAction.toY!);
+                        tempContext.stroke();
+                        break;
+
+                    case GEOMETRY_TYPE.SQUARE:
+                        const size = Math.max(
+                            Math.abs(currentAction.width!),
+                            Math.abs(currentAction.height!)
+                        );
+                        drawSquare(
+                            tempContext,
+                            currentAction.x!,
+                            currentAction.y!,
+                            size
+                        );
+                        break;
+
+                    case GEOMETRY_TYPE.RECTANGLE:
+                        tempContext.strokeRect(
+                            currentAction.x!,
+                            currentAction.y!,
+                            currentAction.width!,
+                            currentAction.height!
+                        );
+                        break;
+
+                    case GEOMETRY_TYPE.CIRCLE:
+                        tempContext.beginPath();
+                        tempContext.arc(
+                            currentAction.x!,
+                            currentAction.y!,
+                            currentAction.radius!,
+                            0,
+                            2 * Math.PI
+                        );
+                        tempContext.stroke();
+                        break;
+
+                    case GEOMETRY_TYPE.HEART:
+                        drawHeart(
+                            tempContext,
+                            currentAction.x!,
+                            currentAction.y!,
+                            Math.abs(currentAction.width!),
+                            Math.abs(currentAction.height!)
+                        );
+                        break;
+
+                    case GEOMETRY_TYPE.TRINGTANGLE:
+                        drawTriangle(
+                            tempContext,
+                            currentAction.x!,
+                            currentAction.y!,
+                            currentAction.width!,
+                            currentAction.height!
+                        );
+                        break;
+                }
             }
             tempContext.globalAlpha = 1;
         }            // Đặt lại trạng thái context trước khi vẽ lại
@@ -270,7 +509,8 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         tempContext.restore();
 
         // Sao chép nội dung từ canvas tạm sang canvas chính với tỷ lệ đúng
-        context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+        context.drawImage(tempCanvas, 0, 0, (tempCanvas.width ?? 0), (tempCanvas.height ?? 0));
+        // context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
 
     }, [currentPage, currentAction, zoomLevel, random]);
     const getAdjustedCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -286,7 +526,18 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         const { x, y } = getAdjustedCoordinates(e);
         const rect = e.currentTarget.getBoundingClientRect();
 
-        if (isSpacePressed || currentTool === 'pan') {
+        // Call onDrawingStart callback
+        if (props.onDrawingStart && currentTool !== 'pan' && !isSpacePressed) {
+            const drawingState: DrawingState = {
+                tool: currentTool,
+                color: currentColor,
+                size: currentBrushSize,
+                type: currentTool === ToolType.GEOMETRY ? currentGeometryType : undefined
+            };
+            props.onDrawingStart(drawingState);
+        }
+
+        if ((isSpacePressed || currentTool === 'pan') && currentTool !== ToolType.TEXT) {
             e.preventDefault();
             setIsPanning(true);
             setPanStart({ x: e.clientX - canvasOffset.x, y: e.clientY - canvasOffset.y });
@@ -310,61 +561,59 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                 color: currentColor,
                 size: currentBrushSize,
                 brushType: currentBrushType,
+                opacity: currentBrushOpacity
             });
         }
         if (currentTool === ToolType.ERASER) {
             setCurrentAction({
                 type: ToolType.ERASER,
                 points: [{ x, y }],
-                color: currentColor,
-                size: currentBrushSize,
+                color: '#FFFFFF',
+                size: currentBrushSize * 2, // Tăng kích thước tẩy lên gấp đôi
+                opacity: 1, // Force opacity là 1
             });
         }
         if (currentTool === ToolType.GEOMETRY) {
-            setCurrentAction({
+            const baseAction = {
                 type: ToolType.GEOMETRY,
-                geometryType: GEOMETRY_TYPE.LINE,
-                fromX: x,
-                fromY: y,
-                toX: x,
-                toY: y,
                 color: currentColor,
                 size: currentBrushSize,
-            })
-            if (currentAction?.geometryType === GEOMETRY_TYPE.LINE) {
-                setCurrentAction({
-                    type: ToolType.GEOMETRY,
-                    geometryType: GEOMETRY_TYPE.LINE,
-                    fromX: x,
-                    fromY: y,
-                    toX: x,
-                    toY: y,
-                    color: currentColor,
-                    size: currentBrushSize,
-                })
-            }
-            if (currentAction?.geometryType === GEOMETRY_TYPE.SQUARE) {
-                setCurrentAction({
-                    type: ToolType.GEOMETRY,
-                    geometryType: GEOMETRY_TYPE.SQUARE,
-                    x,
-                    y,
-                    width: 0,
-                    height: 0,
-                    color: currentColor,
-                    size: currentBrushSize,
-                });
-            }
-            if (currentAction?.geometryType === GEOMETRY_TYPE.SQUARE) {
-                setCurrentAction({
-                    type: ToolType.GEOMETRY,
-                    geometryType: GEOMETRY_TYPE.CIRCLE,
-                    x,
-                    y,
-                    radius: 0,
-                    color: currentColor,
-                    size: currentBrushSize,
-                });
+                timestamp: Date.now(),
+                geometryType: currentGeometryType
+            };
+
+            switch (currentGeometryType) {
+                case GEOMETRY_TYPE.LINE:
+                    setCurrentAction({
+                        ...baseAction,
+                        fromX: x,
+                        fromY: y,
+                        toX: x,
+                        toY: y
+                    });
+                    break;
+
+                case GEOMETRY_TYPE.SQUARE:
+                case GEOMETRY_TYPE.RECTANGLE:
+                case GEOMETRY_TYPE.HEART:
+                case GEOMETRY_TYPE.TRINGTANGLE:
+                    setCurrentAction({
+                        ...baseAction,
+                        x,
+                        y,
+                        width: 0,
+                        height: 0
+                    });
+                    break;
+
+                case GEOMETRY_TYPE.CIRCLE:
+                    setCurrentAction({
+                        ...baseAction,
+                        x,
+                        y,
+                        radius: 0
+                    });
+                    break;
             }
         }
     };
@@ -402,33 +651,51 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
                 ...prev!,
                 points: [...(prev!.points as Point[]), { x, y }],
             }));
+        } if (currentAction.type === ToolType.GEOMETRY) {
+            switch (currentGeometryType) {
+                case GEOMETRY_TYPE.LINE:
+                    setCurrentAction(prev => ({
+                        ...prev!,
+                        toX: x,
+                        toY: y,
+                    }));
+                    break;
+
+                case GEOMETRY_TYPE.SQUARE:
+                    const size = Math.max(
+                        Math.abs(x - currentAction.x!),
+                        Math.abs(y - currentAction.y!)
+                    );
+                    setCurrentAction(prev => ({
+                        ...prev!,
+                        width: size,
+                        height: size,
+                    }));
+                    break;
+
+                case GEOMETRY_TYPE.RECTANGLE:
+                case GEOMETRY_TYPE.HEART:
+                case GEOMETRY_TYPE.TRINGTANGLE:
+                    setCurrentAction(prev => ({
+                        ...prev!,
+                        width: x - prev!.x!,
+                        height: y - prev!.y!,
+                    }));
+                    break;
+
+                case GEOMETRY_TYPE.CIRCLE:
+                    const radius = Math.sqrt(
+                        Math.pow(x - currentAction.x!, 2) +
+                        Math.pow(y - currentAction.y!, 2)
+                    );
+                    setCurrentAction(prev => ({
+                        ...prev!,
+                        radius
+                    }));
+                    break;
+            }
         }
-        if (currentAction.type === ToolType.GEOMETRY) {
-            if (currentGeometryType === GEOMETRY_TYPE.LINE) {
-                setCurrentAction(prev => ({
-                    ...prev!,
-                    toX: x,
-                    toY: y,
-                }));
-            }
 
-            if (currentGeometryType === GEOMETRY_TYPE.SQUARE) {
-                setCurrentAction(prev => ({
-                    ...prev!,
-                    x: Math.min(prev!.x!, x),
-                    y: Math.min(prev!.y!, y),
-                    width: Math.abs(x - prev!.x!),
-                    height: Math.abs(y - prev!.y!),
-                }));
-            }
-
-            if (currentGeometryType === GEOMETRY_TYPE.CIRCLE) {
-                const radius = Math.sqrt((x - currentAction.x!) ** 2 + (y - currentAction.y!) ** 2);
-                setCurrentAction(prev => ({ ...prev!, radius }));
-            }
-        }
-
-        console.log("Move", x, y)
     };
 
     const handleMouseUp = () => {
@@ -442,10 +709,21 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
         }
 
         if (isDrawing && currentAction) {
+            // Cập nhật state
             setCurrentPage(prev => ({
                 ...prev,
                 commands: [...prev.commands, currentAction],
             }));
+
+            // Call onDrawingComplete callback
+            if (props.onDrawingComplete && mousePosition) {
+                const drawingResult: DrawingResult = {
+                    command: currentAction,
+                    position: mousePosition
+                };
+                props.onDrawingComplete(drawingResult);
+            }
+
             setCurrentAction(null);
             setIsDrawing(false);
         }
@@ -478,6 +756,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement>((_, ref) => {
 
         return () => window.removeEventListener('resize', resizeCanvas);
     }, []);
+
 
     return (
         <div

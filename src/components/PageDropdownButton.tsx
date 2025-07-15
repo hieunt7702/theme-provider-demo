@@ -28,7 +28,7 @@ export const PageDropdownButton = () => {
                         <ArrowRightIcon className={`w-5 h-5 flex-none`} strokeWidth={1.6}/>
                     </div>
                     {pages.map((page, index) => (
-                        <div className="w-full">
+                        <div key={index} className="w-full">
                             <Dropdown
                                 placement="right"
                                 isChild

@@ -4,7 +4,7 @@ import Dropdown from "./Dropdown"
 import { InputRange } from "./InputRange";
 import { BRUSH_TYPE, useDrawing } from "../contexts/DrawingContext";
 import ButtonIcon from "./ButtonIcon";
-import { GEOMETRY_TYPE } from "./types/drawing";
+import { GEOMETRY_TYPE } from "../types/drawing";
 import { COLOR_DEFAULT } from "../static/static";
 
 export interface GeometryDropdownButtonProps {

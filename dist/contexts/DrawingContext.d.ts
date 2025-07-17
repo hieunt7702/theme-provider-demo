@@ -12,6 +12,8 @@ interface DrawingContextType {
     setCurrentColor: (color: string) => void;
     currentBrushSize: number;
     setCurrentBrushSize: (size: number) => void;
+    currentBrushOpacity: number;
+    setCurrentBrushOpacity: (opacity: number) => void;
     pages: Page[];
     setPages: Dispatch<SetStateAction<Page[]>>;
     addPage: () => void;

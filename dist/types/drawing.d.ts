@@ -20,6 +20,7 @@ export interface DrawingCommand {
     radius?: number;
     color: string;
     size: number;
+    opacity?: number;
     text?: string;
     textStyle?: {
         fontFamily: string;
@@ -29,6 +30,9 @@ export interface DrawingCommand {
         underline: boolean;
     };
     image?: HTMLImageElement;
+    rotation?: number;
+    flipX?: boolean;
+    flipY?: boolean;
     isSelected?: boolean;
     selectionArea?: {
         x: number;

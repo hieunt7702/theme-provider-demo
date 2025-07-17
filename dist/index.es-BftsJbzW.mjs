@@ -1,4 +1,4 @@
-import { _ as Ma } from "./index-Di6ofMnr.mjs";
+import { _ as Ma } from "./index-C23qTWPD.mjs";
 var qa = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function Zu(n) {
   return n && n.__esModule && Object.prototype.hasOwnProperty.call(n, "default") ? n.default : n;

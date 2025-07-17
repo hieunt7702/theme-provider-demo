@@ -30,7 +30,11 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
         { type: BRUSH_TYPE.PEN, name: "Bút bi", icon: PenOutlineIcon }
     ]
 
-    const { currentBrushSize, currentBrushType, setCurrentBrushType } = useDrawing();
+    const handleOpacityChange = (newOpacity: number) => {
+        setCurrentBrushOpacity(newOpacity);
+    };
+
+    const { currentBrushSize, currentBrushType, setCurrentBrushType, setCurrentBrushOpacity, currentBrushOpacity } = useDrawing();
     return (
         <Dropdown
             placement="right"
@@ -76,6 +80,15 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
                         <span>Độ dày nét</span>
                         <InputRange onChange={onBrushSizeChange} value={currentBrushSize} />
                     </div>
+                    <div className="flex flex-col gap-2">
+                        <span>Độ trong suốt</span>
+                        <InputRange
+                            value={currentBrushOpacity * 100}
+                            onChange={(value) => handleOpacityChange(value / 100)}
+                            maxValue={100}
+                        />
+                    </div>
+
                 </div>
             }
         >

@@ -1,9 +1,17 @@
+import React, { useState } from 'react';
 import { useDrawing } from "../contexts/DrawingContext";
 import { useTheme } from "../contexts/theme-context";
 import ButtonIcon from "./ButtonIcon";
-import Dropdown from "./Dropdown"
+import Dropdown from "./Dropdown";
+import { InputRange } from "./InputRange";
 
-export const MenuDropdownButton = () => {
+interface MenuDropdownButtonProps {
+    onSaveImage?: () => void;
+    onSavePDF?: () => void;
+    onSaveCloud?: () => void;
+}
+
+export const MenuDropdownButton = (props: MenuDropdownButtonProps) => {
     const { iconSet, config } = useTheme();
     const {
         MenuIcon,
@@ -14,19 +22,31 @@ export const MenuDropdownButton = () => {
         ImageIcon,
         ArrowRightIcon,
     } = iconSet;
-    const { copyAsImage, saveAsPDF, saveAsPNG } = useDrawing()
+    const { copyAsImage, saveAsPDF, saveAsPNG } = useDrawing();
     const childMenuItemClass = `h-8 flex-none px-2 py-1 rounded cursor-pointer flex items-center gap-3 ${config?.components?.buttonIcon}`;
     const handleSavePDF = () => {
         saveAsPDF();
+        if (props.onSavePDF) {
+            props.onSavePDF();
+        }
     }
 
     const handleSavePNG = () => {
         saveAsPNG();
+        if (props.onSaveImage) {
+            props.onSaveImage();
+        }
+    }
+
+    const handleSaveCloud = () => {
+        if (props.onSaveCloud) {
+            props.onSaveCloud();
+        }
     }
 
     const exportOptions = [
-        { label: "PDF (.pdf)", icon: PDFIcon, action: saveAsPDF },
-        { label: "Ảnh PNG (.png)", icon: ImageIcon, action: saveAsPNG },
+        { label: "PDF (.pdf)", icon: PDFIcon, action: handleSavePDF },
+        { label: "Ảnh PNG (.png)", icon: ImageIcon, action: handleSavePNG },
     ];
 
     return (
@@ -43,7 +63,9 @@ export const MenuDropdownButton = () => {
                         <CopyImageIcon className="w-5 h-5 flex-none" strokeWidth={1.6}/>
                         <span className="flex-none">Sao chép dưới dạng ảnh</span>
                     </li>
-                    <li className={`h-8 flex-none ${config?.components?.buttonIcon} px-3 py-1 rounded cursor-pointer flex items-center gap-3`}>
+                    <li 
+                        onClick={handleSaveCloud}
+                        className={`h-8 flex-none ${config?.components?.buttonIcon} px-3 py-1 rounded cursor-pointer flex items-center gap-3`}>
                         <SaveCloudIcon className="w-5 h-5 flex-none" strokeWidth={1.6}/>
                         <span className="flex-none">Lưu về Cloud class</span>
                     </li>

@@ -1,11 +1,13 @@
 import { default as React, ReactNode, Dispatch, SetStateAction } from 'react';
-import { Page, DrawingCommand, Point } from '../components/types/drawing';
+import { Page, DrawingCommand, Point, ToolType, GEOMETRY_TYPE } from '../types/drawing';
 
 interface DrawingContextType {
-    currentTool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan';
-    setCurrentTool: (tool: 'select' | 'pencil' | 'eraser' | 'line' | 'rectangle' | 'circle' | 'text' | 'pan') => void;
+    currentTool: ToolType;
+    setCurrentTool: (tool: ToolType) => void;
     currentBrushType: BRUSH_TYPE;
     setCurrentBrushType: (brushType: BRUSH_TYPE) => void;
+    currentGeometryType: GEOMETRY_TYPE;
+    setCurrentGeometryType: (geometryType: GEOMETRY_TYPE) => void;
     currentColor: string;
     setCurrentColor: (color: string) => void;
     currentBrushSize: number;
@@ -49,24 +51,6 @@ interface DrawingContextType {
     }>>;
     zoomLevel: number;
     setZoomLevel: Dispatch<SetStateAction<number>>;
-    selectedElements: DrawingCommand[];
-    setSelectedElements: Dispatch<SetStateAction<DrawingCommand[]>>;
-    selectionArea: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null;
-    setSelectionArea: Dispatch<SetStateAction<{
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null>>;
-    isDragging: boolean;
-    setIsDragging: Dispatch<SetStateAction<boolean>>;
-    dragStart: Point | null;
-    setDragStart: Dispatch<SetStateAction<Point | null>>;
     canvasRef: React.RefObject<HTMLCanvasElement | null>;
     undo: () => void;
     redo: () => void;
@@ -78,10 +62,6 @@ interface DrawingContextType {
     saveAsPNG: () => void;
     saveAsPDF: () => void;
     importImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleStartSelect: (point: Point) => void;
-    handleUpdateSelection: (point: Point) => void;
-    handleFinishSelect: () => void;
-    updateSelectedElements: (offsetX: number, offsetY: number) => void;
     copyAsImage: () => void;
     isClicking: boolean;
     setClicking: Dispatch<SetStateAction<boolean>>;

@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useRef, useEffect } from 'react';
-import { Page, DrawingCommand, Point, ToolType, GEOMETRY_TYPE } from '../components/types/drawing';
+import { Page, DrawingCommand, Point, ToolType, GEOMETRY_TYPE } from '../types/drawing';
 
 interface DrawingContextType {
     // Tool states
@@ -14,6 +14,8 @@ interface DrawingContextType {
     setCurrentColor: (color: string) => void;
     currentBrushSize: number;
     setCurrentBrushSize: (size: number) => void;
+    currentBrushOpacity: number;
+    setCurrentBrushOpacity: (opacity: number) => void;
     // Page states
     pages: Page[];
     setPages: Dispatch<SetStateAction<Page[]>>;
@@ -98,6 +100,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [currentGeometryType, setCurrentGeometryType] = useState<GEOMETRY_TYPE>(GEOMETRY_TYPE.LINE);
     const [currentColor, setCurrentColor] = useState('#000000');
     const [currentBrushSize, setCurrentBrushSize] = useState(2);
+    const [currentBrushOpacity, setCurrentBrushOpacity] = useState(0.8);
 
     // Page states
     const [pages, setPages] = useState<Page[]>([{ id: 1, name: 'Bảng trắng 1', commands: [] }]);
@@ -205,6 +208,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                         text: textValue,
                         color: currentColor,
                         size: currentBrushSize,
+                        opacity: currentBrushOpacity,
                         textStyle: textStyle,
                     },
                 ],
@@ -262,7 +266,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                     ...prev,
                     commands: [
                         ...prev.commands,
-                        { type: ToolType.IMAGE, image: img, color: '#000000', size: 1 },
+                        { type: ToolType.IMAGE, image: img, color: '#000000', size: 1, opacity: currentBrushOpacity, width: img.width, height: img.height, x: 0, y: 0, radius: 0, text: ''},
                     ],
                 }));
             };
@@ -328,6 +332,8 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCurrentColor,
         currentBrushSize,
         setCurrentBrushSize,
+        currentBrushOpacity,
+        setCurrentBrushOpacity,
         pages,
         setPages,
         addPage,

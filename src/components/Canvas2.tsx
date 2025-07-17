@@ -522,28 +522,52 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
         if (commandToHighlight) {
             let bounds = { x: 0, y: 0, width: 0, height: 0 };
 
-            // Tính toán bounds dựa vào loại command
             if (commandToHighlight.points?.length) {
                 // Với nét vẽ tay/tẩy: tính min/max của tất cả các điểm
                 const xPoints = commandToHighlight.points.map((p: Point) => p.x);
                 const yPoints = commandToHighlight.points.map((p: Point) => p.y);
-                const minX = Math.min(...xPoints);
-                const maxX = Math.max(...xPoints);
-                const minY = Math.min(...yPoints);
-                const maxY = Math.max(...yPoints);
                 bounds = {
-                    x: minX,
-                    y: minY,
-                    width: maxX - minX,
-                    height: maxY - minY
+                    x: Math.min(...xPoints),
+                    y: Math.min(...yPoints),
+                    width: Math.max(...xPoints) - Math.min(...xPoints),
+                    height: Math.max(...yPoints) - Math.min(...yPoints)
                 };
             } else if (commandToHighlight.type === ToolType.GEOMETRY) {
-                // Với hình học: lấy thông tin trực tiếp
+                switch (commandToHighlight.geometryType) {
+                    case GEOMETRY_TYPE.LINE:
+                        const x = Math.min(commandToHighlight.fromX!, commandToHighlight.toX!);
+                        const y = Math.min(commandToHighlight.fromY!, commandToHighlight.toY!);
+                        bounds = {
+                            x: x,
+                            y: y,
+                            width: Math.abs(commandToHighlight.toX! - commandToHighlight.fromX!),
+                            height: Math.abs(commandToHighlight.toY! - commandToHighlight.fromY!)
+                        };
+                        break;
+                    case GEOMETRY_TYPE.CIRCLE:
+                        bounds = {
+                            x: commandToHighlight.x! - commandToHighlight.radius!,
+                            y: commandToHighlight.y! - commandToHighlight.radius!,
+                            width: commandToHighlight.radius! * 2,
+                            height: commandToHighlight.radius! * 2
+                        };
+                        break;
+                    default:
+                        bounds = {
+                            x: commandToHighlight.x || 0,
+                            y: commandToHighlight.y || 0,
+                            width: commandToHighlight.width || 0,
+                            height: commandToHighlight.height || 0
+                        };
+                }
+            } else if (commandToHighlight.type === ToolType.TEXT) {
+                const fontSize = commandToHighlight.textStyle?.fontSize || 16;
+                const lines = commandToHighlight.text?.split('\n') || [];
                 bounds = {
                     x: commandToHighlight.x || 0,
                     y: commandToHighlight.y || 0,
-                    width: commandToHighlight.width || 0,
-                    height: commandToHighlight.height || 0
+                    width: Math.max(...lines.map(line => line.length * fontSize * 0.6)),
+                    height: lines.length * fontSize * 1.2
                 };
             }
 
@@ -587,13 +611,73 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
             // Kiểm tra điểm có nằm trong bounds không
             return x >= minX && x <= maxX && y >= minY && y <= maxY;
         } else if (command.type === ToolType.GEOMETRY) {
-            // Với hình học: kiểm tra bounds + độ dày nét vẽ
+            switch (command.geometryType) {
+                case GEOMETRY_TYPE.LINE: {
+                    // Với đường thẳng, tính khoảng cách từ điểm click đến đường thẳng
+                    const x1 = command.fromX!;
+                    const y1 = command.fromY!;
+                    const x2 = command.toX!;
+                    const y2 = command.toY!;
+
+                    // Tính khoảng cách từ điểm (x,y) đến đường thẳng qua 2 điểm (x1,y1) và (x2,y2)
+                    const numerator = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1);
+                    const denominator = Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+                    const distance = numerator / denominator;
+
+                    // Kiểm tra xem điểm có nằm trong phạm vi của đoạn thẳng không
+                    const minX = Math.min(x1, x2) - threshold;
+                    const maxX = Math.max(x1, x2) + threshold;
+                    const minY = Math.min(y1, y2) - threshold;
+                    const maxY = Math.max(y1, y2) + threshold;
+
+                    // Thêm kiểm tra xem điểm có nằm trong khoảng của đoạn thẳng không
+                    const dotProduct = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / 
+                                    (Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    
+                    return distance <= threshold && dotProduct >= 0 && dotProduct <= 1;
+                }
+                case GEOMETRY_TYPE.CIRCLE: {
+                    if (command.radius) {
+                        const distance = Math.sqrt(
+                            Math.pow(x - command.x!, 2) + Math.pow(y - command.y!, 2)
+                        );
+                        const outerRadius = command.radius + threshold;
+                        const innerRadius = Math.max(0, command.radius - threshold);
+                        return distance <= outerRadius && distance >= innerRadius;
+                    }
+                    return false;
+                }
+                case GEOMETRY_TYPE.HEART:
+                case GEOMETRY_TYPE.TRINGTANGLE: {
+                    const cx = command.x || 0;
+                    const cy = command.y || 0;
+                    const width = Math.abs(command.width || 0);
+                    const height = Math.abs(command.height || 0);
+                    
+                    // Thêm padding cho các hình đặc biệt
+                    return x >= cx - threshold && x <= cx + width + threshold &&
+                           y >= cy - threshold && y <= cy + height + threshold;
+                }
+                default: {
+                    const cx = command.x || 0;
+                    const cy = command.y || 0;
+                    const width = command.width || 0;
+                    const height = command.height || 0;
+                    
+                    return x >= cx - threshold && x <= cx + width + threshold &&
+                           y >= cy - threshold && y <= cy + height + threshold;
+                }
+            }
+        } else if (command.type === ToolType.TEXT) {
+            // Với text: kiểm tra bounds của text
             const cx = command.x || 0;
             const cy = command.y || 0;
-            const width = command.width || 0;
-            const height = command.height || 0;
+            const fontSize = command.textStyle?.fontSize || 16;
+            const lines = command.text?.split('\n') || [];
+            const maxWidth = Math.max(...lines.map(line => line.length * fontSize * 0.6));
+            const height = lines.length * fontSize * 1.2;
 
-            return x >= cx - threshold && x <= cx + width + threshold &&
+            return x >= cx - threshold && x <= cx + maxWidth + threshold &&
                 y >= cy - threshold && y <= cy + height + threshold;
         }
         return false;
@@ -740,6 +824,10 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
                 if (updatedCommand.fromY !== undefined) updatedCommand.fromY += dy;
                 if (updatedCommand.toX !== undefined) updatedCommand.toX += dx;
                 if (updatedCommand.toY !== undefined) updatedCommand.toY += dy;
+            } else if (updatedCommand.type === ToolType.TEXT) {
+                // Di chuyển vị trí text
+                if (updatedCommand.x !== undefined) updatedCommand.x += dx;
+                if (updatedCommand.y !== undefined) updatedCommand.y += dy;
             }
 
             // Cập nhật command trong danh sách
@@ -906,6 +994,7 @@ export const Canvas2 = forwardRef<HTMLCanvasElement, Canvas2Props>((props, ref) 
         return () => window.removeEventListener('resize', resizeCanvas);
     }, []);
 
+    console.log("Commands:", currentPage?.commands);    
 
     return (
         <div

@@ -1,10 +1,10 @@
-import { BsCheck } from "react-icons/bs";
 import { useTheme } from "../contexts/theme-context";
 import Dropdown from "./Dropdown"
 import { InputRange } from "./InputRange";
 import { BRUSH_TYPE, useDrawing } from "../contexts/DrawingContext";
 import ButtonIcon from "./ButtonIcon";
 import { COLOR_DEFAULT } from "../static/static";
+import ChipColor from "./ChipColor";
 
 export interface PenDropdownButtonProps {
     isActive?: boolean;
@@ -41,7 +41,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
             dropdown={
                 <div className="flex flex-col gap-3 p-3">
                     <div className="flex flex-col gap-2">
-                        <span>Màu</span>
+                        <span className="text-sm font-medium">Màu</span>
                         <div className="flex items-center gap-2">
                             {COLOR_DEFAULT.map((color) => (
                                 <ChipColor
@@ -51,7 +51,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
                                     checked={currentColor === color}
                                 />
                             ))}
-                            <label htmlFor={"ColorPicker"} style={{ background: currentColor }} className={`w-6 h-6 flex-none rounded outline-none relative`}>
+                            <label htmlFor={"ColorPicker"} style={{ background: currentColor }} className={`w-6 h-6 flex-none rounded outline-none relative cursor-pointer`}>
                                 <input
                                     type="color"
                                     className="w-6 h6 flex-none rounded outline-none invisible"
@@ -63,7 +63,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <span>Loại bút</span>
+                        <span className="text-sm font-medium">loại bút</span>
                         <div className="flex items-center gap-2">
                             {dataPenTypes.map((pen) => (
                                 <ButtonIcon
@@ -77,11 +77,11 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
 
                     </div>
                     <div className="flex flex-col gap-2">
-                        <span>Độ dày nét</span>
+                        <span className="text-sm font-medium">Độ dày nét</span>
                         <InputRange onChange={onBrushSizeChange} value={currentBrushSize} />
                     </div>
                     <div className="flex flex-col gap-2">
-                        <span>Độ trong suốt</span>
+                        <span className="text-sm font-medium">Độ trong suốt</span>
                         <InputRange
                             value={currentBrushOpacity * 100}
                             onChange={(value) => handleOpacityChange(value / 100)}
@@ -94,6 +94,7 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
         >
             {({ isOpen }) => (
                 <ButtonIcon
+                    title="Bút vẽ"
                     onClick={onClick}
                     Icon={iconSet.PencilOutlineIcon}
                     isActive={isOpen || isActive}
@@ -101,22 +102,4 @@ export const PenDropdownButton = ({ isActive, onColorChange, onBrushSizeChange, 
             )}
         </Dropdown>
     )
-}
-
-interface ChipColorProps {
-    color: string;
-    onClick?: () => void;
-    checked?: boolean;
-}
-const ChipColor = ({ color, onClick, checked }: ChipColorProps) => {
-    const { config, iconSet } = useTheme();
-    return (<div
-        className="w-6 h-6 flex-none rounded cursor-pointer hover:opacity-95 active:opacity-80 relative flex items-center justify-center text-white"
-        style={{ backgroundColor: color }}
-        onClick={onClick}
-    >
-        {checked && <iconSet.CheckIcon className="w-4 h-4" />}
-        {/* {checked && <BsCheck className="w-6 h-6 text-white" />} */}
-    </div >
-    );
 }

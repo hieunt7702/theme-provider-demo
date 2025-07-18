@@ -11,6 +11,8 @@ import { GeometryDropdownButton } from "./GeometryDropdownButton";
 import ImageUploadEditor from "./ImageUploadEditor";
 import { useState } from "react";
 import { ToolbarCallbacks } from "../types/toolbar-actions";
+import { PaletteDropdownButton } from "./PaletteDropdownButton";
+import { Tooltip } from "./Tooltip";
 
 interface ToolbarProps extends ToolbarCallbacks { }
 
@@ -24,7 +26,6 @@ export const Toolbar = (props: ToolbarProps) => {
         zoomLevel,
         undo,
         redo,
-        resetZoom,
         zoomOut,
         zoomIn,
         mousePosition,
@@ -44,10 +45,8 @@ export const Toolbar = (props: ToolbarProps) => {
         SquareDashedIcon,
         UndoIcon,
         RedoIcon,
-        SplineIcon,
         CleanIcon,
         ImageUpIcon,
-        PartyPopperIcon
     } = iconSet;
 
     const [showImageEditor, setShowImageEditor] = useState(false);
@@ -64,7 +63,7 @@ export const Toolbar = (props: ToolbarProps) => {
             // Create a temporary canvas for image processing
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             // Ensure we have valid dimensions
             const width = command.width || command.image.width || 0;
             const height = command.height || command.image.height || 0;
@@ -79,14 +78,14 @@ export const Toolbar = (props: ToolbarProps) => {
 
             // Draw and process the image
             ctx.save();
-            
+
             // Apply any transformations from the editor
             if (command.rotation) {
-                ctx.translate(width/2, height/2);
+                ctx.translate(width / 2, height / 2);
                 ctx.rotate((command.rotation * Math.PI) / 180);
-                ctx.translate(-width/2, -height/2);
+                ctx.translate(-width / 2, -height / 2);
             }
-            
+
             ctx.drawImage(command.image, 0, 0, width, height);
             ctx.restore();
 
@@ -101,7 +100,7 @@ export const Toolbar = (props: ToolbarProps) => {
 
             // Create file and update state
             const file = new File([blob], 'drawing-image.png', { type: 'image/png' });
-            
+
             setCurrentPage((prev) => ({
                 ...prev,
                 commands: [...prev.commands, command],
@@ -203,50 +202,52 @@ export const Toolbar = (props: ToolbarProps) => {
                             isActive={currentTool === ToolType.SELECT}
                             title="Chọn vùng"
                         />
-                        <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>
-                            <ImageUpIcon className="w-5 h-5" />
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file || !mousePosition) return;
+                        <Tooltip label="Tải ảnh lên" >
+                            <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>
+                                <ImageUpIcon className="w-5 h-5"/>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file || !mousePosition) return;
 
-                                    // Tạo command cho ảnh và thêm vào currentPage
-                                    const img = new Image();
-                                    img.onload = () => {
-                                        // Thêm command vào currentPage
-                                        setCurrentPage(prev => ({
-                                            ...prev,
-                                            commands: [...prev.commands, {
-                                                type: ToolType.IMAGE,
-                                                image: img,
-                                                x: mousePosition.x,
-                                                y: mousePosition.y,
-                                                width: img.width,
-                                                height: img.height,
-                                                color: currentColor,
-                                                size: 1 // size không ảnh hưởng với image
-                                            }]
-                                        }));
-
-                                        // Sau khi thêm command xong mới gọi callback
-                                        if (props.onImageUpload) {
-                                            props.onImageUpload({
-                                                file,
-                                                position: mousePosition,
-                                                dimensions: {
+                                        // Tạo command cho ảnh và thêm vào currentPage
+                                        const img = new Image();
+                                        img.onload = () => {
+                                            // Thêm command vào currentPage
+                                            setCurrentPage(prev => ({
+                                                ...prev,
+                                                commands: [...prev.commands, {
+                                                    type: ToolType.IMAGE,
+                                                    image: img,
+                                                    x: mousePosition.x,
+                                                    y: mousePosition.y,
                                                     width: img.width,
-                                                    height: img.height
-                                                }
-                                            });
-                                        }
-                                    };
-                                    img.src = URL.createObjectURL(file);
-                                }} 
-                                className="hidden" 
-                            />
-                        </label>
+                                                    height: img.height,
+                                                    color: currentColor,
+                                                    size: 1 // size không ảnh hưởng với image
+                                                }]
+                                            }));
+
+                                            // Sau khi thêm command xong mới gọi callback
+                                            if (props.onImageUpload) {
+                                                props.onImageUpload({
+                                                    file,
+                                                    position: mousePosition,
+                                                    dimensions: {
+                                                        width: img.width,
+                                                        height: img.height
+                                                    }
+                                                });
+                                            }
+                                        };
+                                        img.src = URL.createObjectURL(file);
+                                    }}
+                                    className="hidden"
+                                />
+                            </label>
+                        </Tooltip>
                         {/* Nút upload/image sẽ toggle image editor */}
                         {/* <button
                             onClick={() => setShowImageEditor(true)}
@@ -281,6 +282,12 @@ export const Toolbar = (props: ToolbarProps) => {
                             }}
                             title="Xóa bảng"
                         />
+                        <PaletteDropdownButton
+                            isActive={currentTool === ToolType.PALETTE}
+                            onClick={() => setCurrentTool(ToolType.PALETTE)}
+                            onColorChange={setCurrentColor}
+                            currentColor={currentColor}
+                        />
                         {/* <ButtonIcon
                             Icon={PartyPopperIcon}
                             onClick={() => {
@@ -303,19 +310,19 @@ export const Toolbar = (props: ToolbarProps) => {
                         /> */}
                     </div>
                     <div className="w-10 flex-none flex flex-col items-center gap-2 bg-white rounded shadow-custom-11 py-2" style={{ pointerEvents: 'auto' }}>
-                        <ButtonIcon                        Icon={UndoIcon}
-                        onClick={() => {
-                            const lastCommand = currentPage.commands[currentPage.commands.length - 1];
-                            undo();
-                            // Notify parent about the last undone command
-                            if (props.onDrawingComplete && lastCommand && mousePosition) {
-                                props.onDrawingComplete({
-                                    command: lastCommand,
-                                    position: mousePosition
-                                });
-                            }
-                        }}
-                        title="Undo"
+                        <ButtonIcon Icon={UndoIcon}
+                            onClick={() => {
+                                const lastCommand = currentPage.commands[currentPage.commands.length - 1];
+                                undo();
+                                // Notify parent about the last undone command
+                                if (props.onDrawingComplete && lastCommand && mousePosition) {
+                                    props.onDrawingComplete({
+                                        command: lastCommand,
+                                        position: mousePosition
+                                    });
+                                }
+                            }}
+                            title="Hoàn tác"
                         />
                         <ButtonIcon
                             Icon={RedoIcon}
@@ -330,25 +337,25 @@ export const Toolbar = (props: ToolbarProps) => {
                                     });
                                 }
                             }}
-                            title="Redo"
+                            title="Làm lại"
                         />
                         <div className="flex flex-col items-center gap-1">
-                            <ButtonIcon 
-                                Icon={MinusIcon} 
+                            <ButtonIcon
+                                Icon={MinusIcon}
                                 onClick={() => {
                                     zoomOut();
                                     props.onZoomOut?.();
-                                }} 
-                                title="Zoom Out" 
+                                }}
+                                title="Thu nhỏ"
                             />
                             <span className={`text-xs`}>{Math.round(zoomLevel)}</span>
-                            <ButtonIcon 
-                                Icon={PlusIcon} 
+                            <ButtonIcon
+                                Icon={PlusIcon}
                                 onClick={() => {
                                     zoomIn();
                                     props.onZoomIn?.();
-                                }} 
-                                title="Zoom In" 
+                                }}
+                                title="Phóng to"
                             />
                         </div>
                     </div>

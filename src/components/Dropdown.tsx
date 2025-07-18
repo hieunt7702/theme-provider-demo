@@ -6,9 +6,10 @@ interface DropdownProps {
     placement?: 'top' | 'bottom' | 'left' | 'right';
     isChild?: boolean;
     classNames?: string;
+    handleOpenChange?: (isOpen: boolean) => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bottom', isChild, classNames }) => {
+const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bottom', isChild, classNames, handleOpenChange }) => {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -17,6 +18,7 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setOpen(false);
+                handleOpenChange && handleOpenChange(false);
             }
         };
 
@@ -47,8 +49,8 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
     return (
         <>            {/* Only add overlay when it's not a child dropdown */}
             {!isChild && open && (
-                <div 
-                    className="fixed inset-0 z-40 bg-transparent" 
+                <div
+                    className="fixed inset-0 z-40 bg-transparent"
                     onClick={() => setOpen(false)}
                 />
             )}
@@ -62,7 +64,7 @@ const Dropdown: React.FC<DropdownProps> = ({ children, dropdown, placement = 'bo
                 }}>
                     {children({ isOpen: open })}
                 </div>
-                <div 
+                <div
                     className={`absolute z-50 rounded shadow-custom-11 bg-white transition-all duration-200 ease-in-out transform
                         ${open ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'}
                         ${getPlacementClasses(placement)}`}

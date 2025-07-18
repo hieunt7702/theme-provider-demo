@@ -1,14 +1,14 @@
 {
   "name": "o-drawing-library",
-  "version": "0.2.6",
+  "version": "0.2.8",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "unpkg": "dist/index.umd.js",
   "types": "dist/index.d.ts",
+  "style": "dist/index.css",
   "files": [
     "dist"
   ],
-  "style": "dist/index.css",
   "scripts": {
     "dev": "vite",
     "build:css": "tailwindcss -i ./src/index.css -o ./dist/index.css --minify",
@@ -35,25 +35,16 @@
     ]
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@tabler/icons-react": "^3.34.0",
-    "@types/jest": "^27.5.2",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
-    "fabric": "^5.5.2",
-    "fabricjs-react": "^2.1.0",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.523.0",
-    "phosphor-react": "^1.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-icons": "^5.5.0",
-    "tailwind-merge": "^3.3.0",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "@types/fabric": "^5.3.10",
     "@types/node": "^20.19.1",
     "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.4.21",

@@ -1,19 +1,13 @@
-import { BsCheck } from "react-icons/bs";
 import { useTheme } from "../contexts/theme-context";
 import { useDrawing } from "../contexts/DrawingContext";
 import ButtonIcon from "./ButtonIcon"
 import Dropdown from "./Dropdown"
 import { COLOR_DEFAULT, FONT_FAMILY_DEFAULT, FONT_SIZE_DEFAULT } from "../static/static";
+import ChipColor from "./ChipColor";
 
 interface TextEditorDropdownButtonProps {
     isActive?: boolean;
     onClick?: () => void;
-}
-
-interface ChipColorProps {
-    color: string;
-    onClick?: () => void;
-    checked?: boolean;
 }
 
 export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdownButtonProps) => {
@@ -31,7 +25,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
             dropdown={
                 <div className="flex flex-col gap-3 p-3 min-w-[200px] bg-white rounded shadow-lg">
                     <div className="flex flex-col gap-2">
-                        <span className="text-sm font-medium">Color</span>
+                        <span className="text-sm font-medium">Màu</span>
                         <div className="flex items-center gap-2 flex-wrap">
                             {COLOR_DEFAULT.map((color) => (
                                 <ChipColor
@@ -57,7 +51,7 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <span className="text-sm font-medium">Text Style</span>
+                        <span className="text-sm font-medium">Kiểu văn bản</span>
                         <div className="flex flex-wrap gap-2">
                             <Dropdown
                                 placement="bottom"
@@ -131,24 +125,12 @@ export const TextEditorDropdownButton = ({ isActive, onClick }: TextEditorDropdo
         >
             {({ isOpen }) => (
                 <ButtonIcon
+                    title="Chữ"
                     onClick={onClick}
                     Icon={iconSet.FontsIcon}
                     isActive={isOpen || isActive}
                 />
             )}
         </Dropdown>
-    );
-};
-
-const ChipColor = ({ color, onClick, checked }: ChipColorProps) => {
-    const { iconSet } = useTheme();
-    return (
-        <button
-            className="w-6 h-6 flex-none rounded cursor-pointer hover:opacity-90 active:opacity-80 relative flex items-center justify-center text-white"
-            style={{ backgroundColor: color }}
-            onClick={onClick}
-        >
-            {checked && <iconSet.CheckIcon className="w-4 h-4" />}
-        </button>
     );
 };

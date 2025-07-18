@@ -69,7 +69,7 @@ export const PageDropdownButton = () => {
                 </div>
             )}
         >
-            {({ isOpen }) => (<ButtonIcon Icon={MultipleCardsIcon} isActive={isOpen} />)}
+            {({ isOpen }) => (<ButtonIcon Icon={MultipleCardsIcon} isActive={isOpen} title="Thêm bảng"/>)}
         </Dropdown>
     )
 }

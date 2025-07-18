@@ -1,8 +1,8 @@
 import React from 'react';
 import { Toolbar } from './Toolbar';
-import { Canvas2 } from './Canvas2';
 import { useDrawing } from '../contexts/DrawingContext';
 import { ToolbarCallbacks } from '../types/toolbar-actions';
+import { Canvas } from './Canvas';
 
 interface DrawingContentProps extends ToolbarCallbacks {
     className?: string;
@@ -14,7 +14,7 @@ const DrawingContent: React.FC<DrawingContentProps> = (props) => {
     return (
         <div className="relative">
             <Toolbar {...props} />
-            <Canvas2 
+            <Canvas 
                 ref={canvasRef}
                 onDrawingStart={props.onDrawingStart}
                 onDrawingComplete={props.onDrawingComplete}

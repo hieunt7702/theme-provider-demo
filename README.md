@@ -52,10 +52,10 @@ yarn add o-drawing-library
 ## Basic Usage with Callbacks
 
 ```tsx
-import { DrawingContent } from 'theme-provider-demo';
+import { ThemeProvider, DrawingProvider, DrawingContent } from 'o-drawing-library';
+import 'o-drawing-library/dist/index.css'
 
 function App() {
-  // File operation handlers
   const handleSaveImage = (dataUrl: string) => {
     console.log('Saving image:', dataUrl);
   };
@@ -86,35 +86,22 @@ function App() {
   const handleAction = () => {
 
   }
-
-  return (
-    <DrawingContent 
-      onSaveAsImage={handleSaveImage}
-      onSaveToCloud={handleSaveToCloud}
-      onDrawingStart={handleDrawingStart}
-      onDrawingComplete={handleDrawingComplete}
-      onImageUpload={handleImageUpload}
-      onDrawingStart={handleAction}
-      onImagePaste={handleAction}
-      onClean={handleAction}
-      onErase={handleAction}
-      onZoomIn={handleAction}
-      onZoomOut={handleAction}
-    />
-  );
-}
-
-### Components
-
-jsx
-import { ThemeProvider, DrawingProvider, DrawingContent } from 'theme-provider-demo';
-import 'o-drawing-library/dist/index.css'
-
-function App() {
   return (
     <ThemeProvider>
       <DrawingProvider>
-        <DrawingContent />
+        <DrawingContent 
+          onSaveAsImage={handleSaveImage}
+          onSaveToCloud={handleSaveToCloud}
+          onDrawingStart={handleDrawingStart}
+          onDrawingComplete={handleDrawingComplete}
+          onImageUpload={handleImageUpload}
+          onDrawingStart={handleAction}
+          onImagePaste={handleAction}
+          onClean={handleAction}
+          onErase={handleAction}
+          onZoomIn={handleAction}
+          onZoomOut={handleAction}
+        />
       </DrawingProvider>
     </ThemeProvider>
   );

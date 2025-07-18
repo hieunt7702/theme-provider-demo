@@ -103,7 +103,7 @@ export const MenuDropdownButton = (props: MenuDropdownButtonProps) => {
                 </ul>
             )}
         >
-            {({ isOpen }) => (<ButtonIcon Icon={MenuIcon} isActive={isOpen} />)}
+            {({ isOpen }) => (<ButtonIcon Icon={MenuIcon} isActive={isOpen} title='Menu'/>)}
         </Dropdown>
     )
 }

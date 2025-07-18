@@ -94,7 +94,7 @@ export const InputRange = ({ onChange, value: initialValue = 10, maxValue = 50 }
                 />
             </div>
             <div className="flex items-center justify-center gap-2 px-2 py-1 bg-gray-100 rounded min-w-[40px]">
-                <div className="text-center font-medium text-gray-700">{value}</div>
+                <div className="text-sm text-center font-medium text-gray-700">{value}</div>
             </div>
         </div>
     );

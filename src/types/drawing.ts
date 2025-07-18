@@ -56,7 +56,8 @@ export enum ToolType {
     ERASER = 'eraser',
     GEOMETRY = 'geometry',
     TEXT = 'text',
-    IMAGE = 'image'
+    IMAGE = 'image',
+    PALETTE = 'palette',
 }
 
 export interface Page {
@@ -75,9 +76,6 @@ export enum GEOMETRY_TYPE {
 }
 
 export interface IconSet {
-    HomeIcon: React.ComponentType<any>;
-    SettingsIcon: React.ComponentType<any>;
-    UserIcon: React.ComponentType<any>;
     HandleIcon: React.ComponentType<any>;
     PencilOutlineIcon: React.ComponentType<any>;
     MemoryPenOutlineIcon: React.ComponentType<any>;
@@ -121,4 +119,5 @@ export interface IconSet {
     PenLineIcon: React.ComponentType<any>;
     ShredderIcon: React.ComponentType<any>,
     PartyPopperIcon: React.ComponentType<any>,
+    PaletteIcon: React.ComponentType<any>;
 }

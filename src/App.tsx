@@ -10,12 +10,12 @@ import {
   TableConfig
 } from "./types/toolbar-actions";
 import React from "react";
+import { dataMock } from "./mockData";
 
 
 
 
 const App = () => {
-  const [dataCommands, setDataCommands] = React.useState<DrawingCommand[]>([]);
 
   // Example handlers for toolbar actions
   const handleSaveAsImage = (dataUrl: string) => {
@@ -51,9 +51,8 @@ const App = () => {
 
   const handleDrawingComplete = (result: DrawingResult) => {
     console.log('Drawing completed:', result);
-    console.log('Current commands:', dataCommands);
+    // console.log('Current commands:', dataCommands);
     // Update commands state with the new drawing command
-    setDataCommands(prev => [...prev, result.command]);
     // Handle drawing completion
     // Ví dụ: lưu command vào history
   };
@@ -114,7 +113,7 @@ const App = () => {
 
   return (
     <ThemeProvider>
-      <DrawingProvider dataCommands={dataCommands} setDataCommands={setDataCommands}>
+      <DrawingProvider dataCommands={dataMock as DrawingCommand[]}>
         <DrawingContent
           onSaveAsImage={handleSaveAsImage}
           onSaveAsPDF={handleSaveAsPDF}

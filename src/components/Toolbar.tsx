@@ -33,7 +33,6 @@ export const Toolbar = (props: ToolbarProps) => {
         currentPage,
         setCurrentPage,
         dataCommands,
-        setDataCommands,
     } = useDrawing();
 
     const { config, iconSet } = useTheme();

@@ -82,7 +82,6 @@ interface DrawingContextType {
     isClicking: boolean;
     setClicking: Dispatch<SetStateAction<boolean>>;
     dataCommands: DrawingCommand[] | [];
-    setDataCommands: Dispatch<SetStateAction<DrawingCommand[]>>;
 }
 
 export enum BRUSH_TYPE {
@@ -99,10 +98,9 @@ const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 interface DrawingProviderProps {
     children: ReactNode;
     dataCommands: DrawingCommand[];
-    setDataCommands: Dispatch<SetStateAction<DrawingCommand[]>>;
 }
 
-export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, dataCommands, setDataCommands }) => {
+export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, dataCommands }) => {
     // Tool states
     const [currentTool, setCurrentTool] = useState<ToolType>(ToolType.PAN);
     const [currentBrushType, setCurrentBrushType] = useState<BRUSH_TYPE>(BRUSH_TYPE.PENCIL);
@@ -112,7 +110,7 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
     const [currentBrushOpacity, setCurrentBrushOpacity] = useState(0.8);
 
     // Page states
-    const [pages, setPages] = useState<Page[]>([{ id: 1, name: 'Bảng trắng 1', commands: [] }]);
+    const [pages, setPages] = useState<Page[]>([{ id: 1, name: 'Bảng trắng 1', commands: dataCommands || [] }]);
     const [currentPageId, setCurrentPageId] = useState(1);
     const currentPage = pages.find((page) => page.id === currentPageId)!;
     const [isClicking, setClicking] = useState(false);
@@ -163,7 +161,6 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
                 ...prev,
                 commands: prev.commands.slice(0, -1),
             }));
-            setDataCommands?.(prev => prev.filter(cmd => cmd !== lastCommand));
             setUndoStack((prev) => [...prev, lastCommand]);
         }
     };
@@ -172,7 +169,6 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
         if (undoStack.length > 0) {
             const command = undoStack[undoStack.length - 1];
             setUndoStack((prev) => prev.slice(0, -1));
-            setDataCommands?.(prev => [...prev, command]);
             setCurrentPage((prev) => ({
                 ...prev,
                 commands: [...prev.commands, command],
@@ -182,7 +178,6 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
 
     const clear = () => {
         setCurrentPage({ ...currentPage, commands: [] });
-        setDataCommands?.([]);
         setUndoStack([]);
         setCurrentAction(null);
         setIsDrawing(false);
@@ -388,7 +383,6 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
         setClicking,
         copyAsImage,
         dataCommands,
-        setDataCommands
     };
 
 

@@ -81,6 +81,8 @@ interface DrawingContextType {
     //
     isClicking: boolean;
     setClicking: Dispatch<SetStateAction<boolean>>;
+    dataCommands: DrawingCommand[] | [];
+    setDataCommands: Dispatch<SetStateAction<DrawingCommand[]>>;
 }
 
 export enum BRUSH_TYPE {
@@ -91,9 +93,16 @@ export enum BRUSH_TYPE {
     PEN = 'pen',
 }
 
+
 const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 
-export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+interface DrawingProviderProps {
+    children: ReactNode;
+    dataCommands: DrawingCommand[];
+    setDataCommands: Dispatch<SetStateAction<DrawingCommand[]>>;
+}
+
+export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, dataCommands, setDataCommands }) => {
     // Tool states
     const [currentTool, setCurrentTool] = useState<ToolType>(ToolType.PAN);
     const [currentBrushType, setCurrentBrushType] = useState<BRUSH_TYPE>(BRUSH_TYPE.PENCIL);
@@ -154,6 +163,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                 ...prev,
                 commands: prev.commands.slice(0, -1),
             }));
+            setDataCommands?.(prev => prev.filter(cmd => cmd !== lastCommand));
             setUndoStack((prev) => [...prev, lastCommand]);
         }
     };
@@ -162,6 +172,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (undoStack.length > 0) {
             const command = undoStack[undoStack.length - 1];
             setUndoStack((prev) => prev.slice(0, -1));
+            setDataCommands?.(prev => [...prev, command]);
             setCurrentPage((prev) => ({
                 ...prev,
                 commands: [...prev.commands, command],
@@ -171,6 +182,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const clear = () => {
         setCurrentPage({ ...currentPage, commands: [] });
+        setDataCommands?.([]);
         setUndoStack([]);
         setCurrentAction(null);
         setIsDrawing(false);
@@ -266,7 +278,7 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
                     ...prev,
                     commands: [
                         ...prev.commands,
-                        { type: ToolType.IMAGE, image: img, color: '#000000', size: 1, opacity: currentBrushOpacity, width: img.width, height: img.height, x: 0, y: 0, radius: 0, text: ''},
+                        { type: ToolType.IMAGE, image: img, color: '#000000', size: 1, opacity: currentBrushOpacity, width: img.width, height: img.height, x: 0, y: 0, radius: 0, text: '' },
                     ],
                 }));
             };
@@ -375,7 +387,10 @@ export const DrawingProvider: React.FC<{ children: ReactNode }> = ({ children })
         isClicking,
         setClicking,
         copyAsImage,
+        dataCommands,
+        setDataCommands
     };
+
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>;
 };

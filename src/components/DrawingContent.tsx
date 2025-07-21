@@ -3,6 +3,8 @@ import { Toolbar } from './Toolbar';
 import { useDrawing } from '../contexts/DrawingContext';
 import { ToolbarCallbacks } from '../types/toolbar-actions';
 import { Canvas } from './Canvas';
+import { DrawingCommand } from '../types/drawing';
+import { useTheme } from '../contexts/theme-context';
 
 interface DrawingContentProps extends ToolbarCallbacks {
     className?: string;
@@ -10,11 +12,11 @@ interface DrawingContentProps extends ToolbarCallbacks {
 
 const DrawingContent: React.FC<DrawingContentProps> = (props) => {
     const { canvasRef } = useDrawing();
-
+    const { config } = useTheme();
     return (
-        <div className="relative">
+        <div className={`${config.global} min-h-screen w-full relative`} >
             <Toolbar {...props} />
-            <Canvas 
+            <Canvas
                 ref={canvasRef}
                 onDrawingStart={props.onDrawingStart}
                 onDrawingComplete={props.onDrawingComplete}

@@ -65,7 +65,9 @@ export interface ToolbarCallbacks {
   onPaste?: (data: DrawingCommand[], position: Point) => void;
   
   // Canvas actions
-  onClean?: () => void;
+  onUndo?: (dataCommands: DrawingCommand[]) => void;
+  onRedo?: (dataCommands: DrawingCommand[]) => void;
+  onClean?: (dataCommands: DrawingCommand[]) => void;
   onErase?: (area: Area) => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;

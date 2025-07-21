@@ -10,7 +10,8 @@ import {
     Area,
     TableConfig
 } from '../types/toolbar-actions';
-interface CanvasProps extends ToolbarCallbacks { }
+interface CanvasProps extends ToolbarCallbacks {
+}
 
 export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) => {
     const {
@@ -36,7 +37,8 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
         setMousePosition,
         isClicking,
         setClicking,
-        currentBrushOpacity
+        currentBrushOpacity,
+        dataCommands
     } = useDrawing();
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,7 +54,6 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
     const [hoveredCommand, setHoveredCommand] = useState<DrawingCommand | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStartPosition, setDragStartPosition] = useState<Point | null>(null);
-
 
     // Helper functions for drawing shapes
     const drawHeart = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
@@ -109,63 +110,10 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
 
     useEffect(() => {
         if (ref && typeof ref === 'object' && 'current' in ref) {
-            (ref as React.MutableRefObject<HTMLCanvasElement | null>).current = canvasRef.current;
+            (ref as React.RefObject<HTMLCanvasElement | null>).current = canvasRef.current;
         }
     }, [ref]);
 
-    // Handle Canvas Actions
-    const handleClean = () => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (!ctx || !canvas) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        props.onClean?.();
-    };
-
-    const handleErase = (area: Area) => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (!ctx || !canvas) return;
-
-        ctx.clearRect(area.x, area.y, area.width, area.height);
-        props.onErase?.(area);
-    };
-
-    const handleZoom = (type: 'in' | 'out') => {
-        if (type === 'in') {
-            setZoomLevel(prev => Math.min(prev + 0.1, 3));
-            props.onZoomIn?.();
-        } else {
-            setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
-            props.onZoomOut?.();
-        }
-    };
-
-    const handleAddTable = (config: TableConfig) => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (!ctx || !canvas) return;
-
-        const { rows, columns, position, cellWidth = 80, cellHeight = 40, style } = config;
-        const { borderColor = '#000000', borderWidth = 1, backgroundColor = '#ffffff' } = style || {};
-
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = borderWidth;
-        ctx.fillStyle = backgroundColor;
-
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns; j++) {
-                const x = position.x + j * cellWidth;
-                const y = position.y + i * cellHeight;
-
-                ctx.fillRect(x, y, cellWidth, cellHeight);
-                ctx.strokeRect(x, y, cellWidth, cellHeight);
-            }
-        }
-
-        props.onAddTable?.(config);
-    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -855,12 +803,12 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
         }
 
         if (isDrawing && currentAction) {
-            // Cập nhật state
+            // Cập nhật state với cả currentAction và dataCommands
             setCurrentPage(prev => ({
                 ...prev,
                 commands: [...prev.commands, currentAction],
+                // commands: [...(dataCommands || []), currentAction],
             }));
-
 
             // Call onDrawingComplete callback
             if (props.onDrawingComplete && mousePosition) {
@@ -904,7 +852,6 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
         return () => window.removeEventListener('resize', resizeCanvas);
     }, []);
 
-    console.log("Commands:", currentPage?.commands);    
 
     return (
         <div
@@ -934,7 +881,7 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>((props, ref) =>
                     ref={tempCanvasRef}
                     className="absolute top-0 left-0 w-full h-full pointer-events-none"
                 />
-                
+
                 {showTextInput && textPosition && (
                     <TextEditor position={{ x: textPosition.x, y: textPosition.y }} />
                 )}

@@ -31,7 +31,9 @@ export const Toolbar = (props: ToolbarProps) => {
         mousePosition,
         clear,
         currentPage,
-        setCurrentPage
+        setCurrentPage,
+        dataCommands,
+        setDataCommands,
     } = useDrawing();
 
     const { config, iconSet } = useTheme();
@@ -204,7 +206,7 @@ export const Toolbar = (props: ToolbarProps) => {
                         />
                         <Tooltip label="Tải ảnh lên" >
                             <label className={`h-8 w-8 flex items-center justify-center flex-none rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer ${style}}`}>
-                                <ImageUpIcon className="w-5 h-5"/>
+                                <ImageUpIcon className="w-5 h-5" />
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -278,7 +280,7 @@ export const Toolbar = (props: ToolbarProps) => {
                             Icon={CleanIcon}
                             onClick={() => {
                                 clear();
-                                props.onClean?.();
+                                props.onClean && props.onClean(dataCommands);
                             }}
                             title="Xóa bảng"
                         />
@@ -314,13 +316,14 @@ export const Toolbar = (props: ToolbarProps) => {
                             onClick={() => {
                                 const lastCommand = currentPage.commands[currentPage.commands.length - 1];
                                 undo();
+                                props.onUndo && props.onUndo(dataCommands);
                                 // Notify parent about the last undone command
-                                if (props.onDrawingComplete && lastCommand && mousePosition) {
-                                    props.onDrawingComplete({
-                                        command: lastCommand,
-                                        position: mousePosition
-                                    });
-                                }
+                                // if (props.onDrawingComplete && lastCommand && mousePosition) {
+                                //     props.onDrawingComplete({
+                                //         command: lastCommand,
+                                //         position: mousePosition
+                                //     });
+                                // }
                             }}
                             title="Hoàn tác"
                         />
@@ -328,14 +331,15 @@ export const Toolbar = (props: ToolbarProps) => {
                             Icon={RedoIcon}
                             onClick={() => {
                                 redo();
+                                props.onRedo && props.onRedo(dataCommands);
                                 // Get the last command after redo
-                                const lastCommand = currentPage.commands[currentPage.commands.length - 1];
-                                if (props.onDrawingComplete && lastCommand && mousePosition) {
-                                    props.onDrawingComplete({
-                                        command: lastCommand,
-                                        position: mousePosition
-                                    });
-                                }
+                                // const lastCommand = currentPage.commands[currentPage.commands.length - 1];
+                                // if (props.onDrawingComplete && lastCommand && mousePosition) {
+                                //     props.onDrawingComplete({
+                                //         command: lastCommand,
+                                //         position: mousePosition
+                                //     });
+                                // }
                             }}
                             title="Làm lại"
                         />

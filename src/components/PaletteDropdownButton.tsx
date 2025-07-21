@@ -5,7 +5,6 @@ import { COLOR_DEFAULT } from "../static/static";
 import ChipColor from "./ChipColor";
 import { useDrawing } from "../contexts/DrawingContext";
 import { ToolType } from "../types/drawing";
-
 export interface PaletteDropdownButtonProps {
     isActive?: boolean;
     onColorChange?: (color: string) => void;

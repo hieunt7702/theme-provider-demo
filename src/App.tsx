@@ -2,19 +2,20 @@ import { ThemeProvider, useTheme } from "./contexts/theme-context";
 import { DrawingProvider } from "./contexts/DrawingContext";
 import DrawingContent from "./components/DrawingContent";
 import { DrawingCommand } from "./types/drawing";
-import { 
-  FileUploadEvent, 
-  DrawingState, 
-  DrawingResult, 
-  Area, 
-  TableConfig 
+import {
+  FileUploadEvent,
+  DrawingState,
+  DrawingResult,
+  Area,
+  TableConfig
 } from "./types/toolbar-actions";
+import React from "react";
 
 
 
 
-const AppContent = () => {
-  const { config } = useTheme();
+const App = () => {
+  const [dataCommands, setDataCommands] = React.useState<DrawingCommand[]>([]);
 
   // Example handlers for toolbar actions
   const handleSaveAsImage = (dataUrl: string) => {
@@ -50,6 +51,9 @@ const AppContent = () => {
 
   const handleDrawingComplete = (result: DrawingResult) => {
     console.log('Drawing completed:', result);
+    console.log('Current commands:', dataCommands);
+    // Update commands state with the new drawing command
+    setDataCommands(prev => [...prev, result.command]);
     // Handle drawing completion
     // Ví dụ: lưu command vào history
   };
@@ -66,10 +70,22 @@ const AppContent = () => {
   };
 
   // Canvas action handlers
-  const handleClean = () => {
-    console.log('Canvas cleaned');
+  const handleClean = (dataCommands: DrawingCommand[]) => {
+    console.log('Canvas cleaned', dataCommands);
     // Thêm logic xử lý sau khi xóa canvas
     // Ví dụ: reset history, notify users
+  };
+
+  const handleUndo = (dataCommands: DrawingCommand[]) => {
+    console.log('Undo action performed', dataCommands);
+    // Thêm logic xử lý sau khi undo
+    // Ví dụ: update history, notify users
+  };
+
+  const handleRedo = (dataCommands: DrawingCommand[]) => {
+    console.log('Redo action performed', dataCommands);
+    // Thêm logic xử lý sau khi redo
+    // Ví dụ: update history, notify users
   };
 
   const handleErase = (area: Area) => {
@@ -97,9 +113,9 @@ const AppContent = () => {
   };
 
   return (
-    <div className={`${config.global} min-h-screen p-6`}>
-      <div className="mt-6">
-        <DrawingContent 
+    <ThemeProvider>
+      <DrawingProvider dataCommands={dataCommands} setDataCommands={setDataCommands}>
+        <DrawingContent
           onSaveAsImage={handleSaveAsImage}
           onSaveAsPDF={handleSaveAsPDF}
           onSaveToCloud={handleSaveToCloud}
@@ -112,20 +128,13 @@ const AppContent = () => {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onAddTable={handleAddTable}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
         />
-      </div>
-    </div>
-  );
-};
-
-const App = () => {
-  return (
-    <ThemeProvider>
-      <DrawingProvider>
-        <AppContent />
-      </DrawingProvider>
+      </DrawingProvider >
     </ThemeProvider>
   );
 };
+
 
 export default App;

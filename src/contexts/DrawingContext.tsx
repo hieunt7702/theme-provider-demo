@@ -127,6 +127,7 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
         });
     };
 
+
     // Drawing states
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentAction, setCurrentAction] = useState<DrawingCommand | null>(null);
@@ -182,6 +183,10 @@ export const DrawingProvider: React.FC<DrawingProviderProps> = ({ children, data
         setCurrentAction(null);
         setIsDrawing(false);
     };
+
+    useEffect(() => {
+        setCurrentPage({ ...currentPage, commands: dataCommands });
+    }, [dataCommands])
 
     useEffect(() => {
         if (currentTool !== 'text') {
